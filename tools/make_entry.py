@@ -5,6 +5,7 @@
 - タグの時点のファイル（manifest.json・core.py の ENGINE_VERSION・engine_options.json・README.md・layout.jpg・波形の列）を
   `git show <タグ>:<ファイル>` で読む（作業中の変更は使わない）。タグのコミットは GitHub に push 済みであること
 - 同じ engine_key の項目があれば置き換える。ただし validation（精度の評価）と ventilator は残す（手で書くもの）。
+  新しい版で増えた値・波形の欄は validation に足す（消えた値の欄は残すので、要らなければ手で消す）。
   版が変わったときは、validation の engine_version が古い版のままになる（アプリは「この評価は版 x のもの」と出す）。評価をやり直したら書き直す
 - 新しい項目の validation は空（reported: false）。値は manifest.json の accuracy の列、波形はエンジンが書く列から作る
 """
@@ -99,6 +100,12 @@ def main() -> int:
     old = next((e for e in registry["engines"] if e["engine_key"] == key), None)
     entry["ventilator"] = entry["ventilator"] or (old or {}).get("ventilator")
     entry["validation"] = (old or {}).get("validation") or blank_validation(manifest, waves)
+    # 新しい版で増えた値（manifest の accuracy）・波形の欄を足す（書いてある評価は残す）
+    blank = blank_validation(manifest, waves)
+    for group in ("values", "waveforms"):
+        current = entry["validation"].setdefault(group, {})
+        for name, item in blank[group].items():
+            current.setdefault(name, item)
     registry["engines"] = [e for e in registry["engines"] if e["engine_key"] != key] + [entry]
     registry["engines"].sort(key=lambda e: e["engine_key"].lower())
     registry["updated"] = date.today().isoformat()
