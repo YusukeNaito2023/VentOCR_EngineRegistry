@@ -990,6 +990,179 @@
       }
     },
     {
+      "engine_key": "nava_ventocr_v1_4",
+      "repository": "YusukeNaito2023/VentOCR_NAVA",
+      "tag": "v1.4.0",
+      "commit": "b69a9fd3161f5bc3951c19743801e31f3760468a",
+      "ventilator": "Servo-U",
+      "core_version": "1.4.0",
+      "manifest": {
+        "engine_key": "nava_ventocr_v1_4",
+        "display_name": "NAVA v1.4",
+        "developer": "VentOCR Developer Team",
+        "version": "1.4.0",
+        "ventocr_min": "0.5.5",
+        "description": "Servo-U ventilator Edi waveform OCR engine (resolution-independent; frames normalized to 1280x720). v1.3: waveform points are chosen from the vertical extent of the trace in each column (globally optimal path with peak/valley tips preserved), removing false spikes at steep transitions; Flow scale fit excludes steep segments. v1.4: abnormal frames (pop-ups) are detected in initial_ocr from in-memory frames (Frames.csv column Abnormal); post-processing reads only the frames used for waveform extraction (engine_api 3); frame counts follow GS.FPS (engine_api 2).",
+        "engine_api": 3,
+        "sample_video": "Sample_NAVA_VentOCR.mp4",
+        "base_resolution": "1280x720",
+        "supported_resolutions": [
+          "1280x720",
+          "1920x1080"
+        ],
+        "has_extract_waves": false,
+        "output_columns": {
+          "frames": [
+            "Frame",
+            "VTi",
+            "VTe",
+            "Cdyn",
+            "Triggered",
+            "BreathMark",
+            "Ppeak",
+            "Abnormal"
+          ],
+          "breaths": [
+            "BreathNumber",
+            "Cdyn",
+            "VTe",
+            "Real_VTe",
+            "Real_Ppeak",
+            "Real_VTi"
+          ]
+        },
+        "breath_summary": [
+          "VTe",
+          "Real_VTe",
+          "Real_VTi",
+          "Real_Ppeak",
+          "EdiPeak",
+          "Cdyn",
+          "IE_Ratio"
+        ],
+        "accuracy": {
+          "VTe": {
+            "method": null,
+            "threshold": null,
+            "unit": "mL"
+          },
+          "VTi": {
+            "method": null,
+            "threshold": null,
+            "unit": "mL"
+          },
+          "Cdyn": {
+            "method": null,
+            "threshold": null,
+            "unit": "mL/cmH2O"
+          },
+          "BreathMark": {
+            "method": null,
+            "threshold": null
+          }
+        }
+      },
+      "default_options": {
+        "initial_ocr": {
+          "skip_keys": [],
+          "similarity_thresh": 0.9,
+          "sampling_size": 10,
+          "use_gpu": true,
+          "diff_gating": true,
+          "diff_thresh": 2.0,
+          "diff_thresh_cdyn": 0.5,
+          "recognize_conf_fallback": 0.5
+        },
+        "post_ocr": {
+          "imputation_col": [
+            "VTe",
+            "EdiPeak"
+          ],
+          "smoothing": false,
+          "imputation": false,
+          "scale": {
+            "enabled": true
+          },
+          "trim_to_breath": true,
+          "detect_sweep_line": false
+        }
+      },
+      "readme": "# NAVA Engine (nava_ventocr)\n\n## Version\n\n1.4\n\n### Changes in v1.4\n\n- 解析の高速化: 後処理で全フレームの JPEG を読むのをやめた（engine_api 3）。異常フレーム（ポップアップなど）は initial_ocr の中で\n  メモリにあるフレームで判定し、Frames.csv の `Abnormal` 列に記録する。\n- 波形を読む開始・終了画像が Abnormal の呼吸だけ波形を書き出さない（v1.3 までは呼吸の途中に1枚でもあれば書き出さなかった）。\n- 秒とフレーム数の換算に `GS.FPS` を使う（10 fps では v1.3 と同じ結果）。\n- 詳細は CHANGELOG.md\n\n### Changes in v1.3\n\n- 波形の点の選び方を変更（`ExtractWaves._extract_waveform`）。v1.2 は列ごとに「色相が最も近い1画素」を\n  採用しており、急峻な箇所（1列に縦線がある所）で選ぶ高さが偶然で決まり、画面に無いスパイクが出ていた。\n  v1.3 は列ごとに「線が通った範囲」を取り、呼吸全体で最適な経路を引き、V字の谷・山の先端は残す。\n- Flow の目盛りの推定で、Flow が急に変わる区間を当てはめから除き、`FLOW_GAIN` を 1.06 → 1.05 に。\n- 平滑化オプション（smoothing）が効いていなかった不具合を修正（既定は OFF のまま）。\n- 波形 CSV を呼吸の範囲（吸気の始まり〜次の吸気の始まり）に切り詰める（`trim_to_breath`、既定 ON）。\n  前の呼吸の呼気の終わりと次の呼吸の立ち上がりを除き、時刻は Breaths.csv の Wave_T0 / Wave_Rate で保つ。\n- 詳細は CHANGELOG.md\n\n### Changes in v1.2\n\n- 波形色のマッチングを BGR ユークリッド距離から **HSV(色相)ベース** に変更。\n  色相は明度・彩度の低下に強いため、高解像度動画(1920x1080)を 1280x720 へ縮小した際に\n  アンチエイリアスで暗く混色していた **Pressure の急峻な立ち上がり** を欠損なく検出できる。\n  ROI・色定義・後処理インターフェースは v1.1 と互換。\n\n## Overview\n\nNAVA Engine is a waveform analysis module designed for Servo-i ventilator images.  \nIt extracts numerical parameters such as VTi, VTe, Cdyn, and Edi from waveform screenshots using OCR and image processing techniques, and structures them into breath-by-breath datasets.\n\nThis engine integrates:\n\n- OCR-based value extraction (EasyOCR)\n- Histogram-based trigger detection (OpenCV)\n- Noise filtering and anomaly exclusion\n- Breath segmentation and reconstruction\n\nThe engine is optimized for GPU acceleration.\n\n---\n\n## Architecture\n\n### File Structure\n\n```\nEngine/NAVA/\n├ core.py\n├ ExtractWaves.py\n├ sample_frame.jpg\n└ README.md\n```\n\n---\n\n## Dependencies\n\n- EasyOCR (GPU supported)\n- OpenCV\n- pandas\n- numpy\n- tqdm\n- re, gc\n\n---\n\n## Input\n\n### Required Inputs\n\n- `grayed_frame`  \n  List of grayscale frames (OpenCV format)\n\n- `total_frames`  \n  Total number of frames\n\n---\n\n## Processing Pipeline\n\n---\n\n### 1. Initial OCR (`initial_ocr`)\n\n#### 1.1 Preprocessing\n\n- Load `sample_frame.jpg`\n- Compute histogram for Triggered ROI\n- Extract ROIs based on predefined coordinates (`Settings.ROIs`)\n\n---\n\n#### 1.2 ROI Processing\n\n| ROI Name | Method |\n|--------|------|\n| Triggered | Histogram correlation (cv2.HISTCMP_CORREL) |\n| VTi, VTe, Cdyn | EasyOCR → numeric cleaning |\n\n---\n\n#### Trigger Detection Logic\n\n- Correlation > 0.9 → Not Triggered (0)\n- Correlation ≤ 0.9 → Triggered (1)\n\n---\n\n#### OCR Normalization\n\n- Remove multiple decimal points\n- Empty → 0\n\n---\n\n#### Output\n\nFrame-level DataFrame:\n\n```\nFrame | VTi | VTe | Cdyn | Triggered\n```\n\n---\n\n### 2. Post Processing (`post_ocr`)\n\n---\n\n#### 2.1 Cdyn Correction\n\n- If Cdyn > 100 → divide by 10\n- Isolated values → set as NaN\n- BreathNumber assigned at Cdyn transition points\n\n---\n\n#### 2.2 Mode Value Completion\n\nFor each breath:\n\n- VTe → replaced with mode\n- Edi Peak → replaced with mode\n\n---\n\n#### 2.3 Time Calculation\n\n- Based on Frame index and FPS\n- Format:\n\n```\nhh:mm:ss:cc\n```\n\n---\n\n### 3. Breath Structuring\n\n---\n\n#### 3.1 Representative Frame Extraction\n\n- First frame of each BreathNumber is used\n\n---\n\n#### 3.2 Filtering Short Breaths\n\n- Frame difference ≤ 13 → excluded\n- Merged into previous breath\n\n---\n\n#### 3.3 Real VTe Assignment\n\n- Ventilator displays delayed VTe\n- Assigned to previous breath as:\n\n```\nReal_VTe\n```\n\n---\n\n### 4. Abnormal Detection\n\n---\n\n#### 4.1 AbnormalFrameDetector（initial_ocr の中）\n\n- 各フレームの `ROI_LIST_Abnormal_Detection` の範囲を、区間の黒でないフレームの中央値と比べる（平均差・標準偏差の差・ヒストグラム相関）\n- Frames.csv に記録:\n\n```\nAbnormal = 1\n```\n\n- 波形を読む開始・終了画像が Abnormal の呼吸は波形を書き出さない\n\n---\n\n#### 4.2 BreathsToCSVs()\n\n- Each valid breath saved as:\n\n```\nBreathCSVs/1.csv\nBreathCSVs/2.csv\n...\n```\n\n---\n\n## Output\n\n---\n\n### Frame-level Data\n\n```\ndf_frames\n```\n\n---\n\n### Breath-level Data\n\n```\ndf_breath\n```\n\nIncludes:\n\n- Cdyn\n- VTe\n- Real_VTe\n- BreathNumber\n\n---\n\n## Exception Handling\n\n- OCR failure → 0 or NaN\n- Trigger detection uses histogram (not OCR)\n- Missing `sample_frame.jpg` → Exception\n\n---\n\n## Use Cases\n\n- NAVA waveform analysis\n- Edi signal extraction\n- Preprocessing for annotation\n- Research / development datasets\n\n---\n\n## Limitations\n\n- OCR accuracy depends on image quality\n- Requires correct ROI configuration\n- Sensitive to UI layout changes\n\n---\n\n## Author\n\nVentOCR Developer Team  \nContact: naito623@naramed-u.ac.jp\n",
+      "layout": "layout.jpg",
+      "waveforms": [
+        "Pressure",
+        "Flow",
+        "Volume",
+        "Edi"
+      ],
+      "validation": {
+        "reported": false,
+        "engine_version": null,
+        "date": null,
+        "reporter": null,
+        "videos": null,
+        "breaths": null,
+        "modes": [],
+        "comment": "",
+        "values": {
+          "VTe": {
+            "unit": "mL",
+            "metric": null,
+            "result": null,
+            "n": null,
+            "comment": ""
+          },
+          "VTi": {
+            "unit": "mL",
+            "metric": null,
+            "result": null,
+            "n": null,
+            "comment": ""
+          },
+          "Cdyn": {
+            "unit": "mL/cmH2O",
+            "metric": null,
+            "result": null,
+            "n": null,
+            "comment": ""
+          },
+          "BreathMark": {
+            "unit": null,
+            "metric": null,
+            "result": null,
+            "n": null,
+            "comment": ""
+          }
+        },
+        "waveforms": {
+          "Pressure": {
+            "metric": null,
+            "result": null,
+            "n": null,
+            "comment": ""
+          },
+          "Flow": {
+            "metric": null,
+            "result": null,
+            "n": null,
+            "comment": ""
+          },
+          "Volume": {
+            "metric": null,
+            "result": null,
+            "n": null,
+            "comment": ""
+          },
+          "Edi": {
+            "metric": null,
+            "result": null,
+            "n": null,
+            "comment": ""
+          }
+        }
+      }
+    },
+    {
       "engine_key": "postnava_ventocr",
       "repository": "YusukeNaito2023/VentOCR_PostNAVA",
       "tag": "v2.0.0",
@@ -1306,5 +1479,5 @@
       }
     }
   ],
-  "updated": "2026-10-18"
+  "updated": "2026-10-19"
 }
