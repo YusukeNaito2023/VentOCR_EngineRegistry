@@ -1,13 +1,15 @@
-"""エンジンのリポジトリのタグから engines.json の項目を作る・更新する。
+"""エンジンのリポジトリのタグから engines.json の版を作る・足す（format 2）。
 
     python3 tools/make_entry.py <エンジンのリポジトリ（手元の clone）> <タグ> [--ventilator 機種] [--repository 所有者/名前]
 
+- 一覧は engine_key ごとに1つの項目で、版は versions[]（版の昇順）。インストールできるのは versions の版だけ
 - タグの時点のファイル（manifest.json・core.py の ENGINE_VERSION・engine_options.json・README.md・layout.jpg・波形の列）を
   `git show <タグ>:<ファイル>` で読む（作業中の変更は使わない）。タグのコミットは GitHub に push 済みであること
-- 同じ engine_key の項目があれば置き換える。ただし validation（精度の評価）と ventilator は残す（手で書くもの）。
-  新しい版で増えた値・波形の欄は validation に足す（消えた値の欄は残すので、要らなければ手で消す）。
-  版が変わったときは、validation の engine_version が古い版のままになる（アプリは「この評価は版 x のもの」と出す）。評価をやり直したら書き直す
-- 新しい項目の validation は空（reported: false）。値は manifest.json の accuracy の列、波形はエンジンが書く列から作る
+- 版は 0.X.Y。タグ = v<版>、manifest.json の version = core.py の ENGINE_VERSION = 版 でなければ止める
+- 既存のキーなら versions に足す（同じ版があれば置き換える。そのときは validation を残す）。新しいキーなら項目を作る。
+  ventilator はキーごと（手で書くもの。--ventilator か manifest.json の ventilator で、無ければ前の値を残す）
+- 新しい版の validation は空（reported: false）。値は manifest.json の accuracy の列、波形はエンジンが書く列から作る。
+  前の版と中身が同じで評価を引き継ぐときは、手で写して engine_version を書き直す
 """
 from __future__ import annotations
 
@@ -82,13 +84,19 @@ def main() -> int:
     if not repository:
         url = git(repo, "remote", "get-url", "origin").strip()
         repository = re.sub(r"(\.git)?$", "", url.split("github.com")[-1].lstrip(":/"))
-    entry = {
-        "engine_key": key,
-        "repository": repository,
+    version = manifest.get("version")
+    core_version = m.group(1) if m else None
+    if not isinstance(version, str) or not re.fullmatch(r"0\.\d+\.\d+", version):
+        sys.exit(f"manifest.json の version が 0.X.Y ではありません: {version!r}")
+    if args.tag != f"v{version}":
+        sys.exit(f"タグ {args.tag} が manifest.json の version（v{version}）と違います")
+    if core_version != version:
+        sys.exit(f"core.py の ENGINE_VERSION（{core_version}）が manifest.json の version（{version}）と違います")
+    release = {
+        "version": version,
         "tag": args.tag,
         "commit": git(repo, "rev-list", "-n", "1", args.tag).strip(),
-        "ventilator": manifest.get("ventilator") or args.ventilator,
-        "core_version": m.group(1) if m else None,
+        "core_version": core_version,
         "manifest": manifest,
         "default_options": json.loads(options_text) if options_text else None,
         "readme": show(repo, args.tag, "README.md"),
@@ -96,21 +104,29 @@ def main() -> int:
         "waveforms": waves,
     }
 
-    registry = json.loads(REGISTRY.read_text("utf-8")) if REGISTRY.is_file() else {"format": 1, "engines": []}
-    old = next((e for e in registry["engines"] if e["engine_key"] == key), None)
-    entry["ventilator"] = entry["ventilator"] or (old or {}).get("ventilator")
-    entry["validation"] = (old or {}).get("validation") or blank_validation(manifest, waves)
-    # 新しい版で増えた値（manifest の accuracy）・波形の欄を足す（書いてある評価は残す）
+    registry = json.loads(REGISTRY.read_text("utf-8")) if REGISTRY.is_file() else {"format": 2, "engines": []}
+    if registry.get("format") != 2:
+        sys.exit(f"engines.json の format が 2 ではありません（{registry.get('format')}）")
+    entry = next((e for e in registry["engines"] if e["engine_key"] == key), None)
+    if entry is None:
+        entry = {"engine_key": key, "repository": repository, "ventilator": None, "versions": []}
+        registry["engines"].append(entry)
+    entry["repository"] = repository
+    entry["ventilator"] = manifest.get("ventilator") or args.ventilator or entry.get("ventilator")
+    old = next((v for v in entry["versions"] if v["version"] == version), None)
+    release["validation"] = (old or {}).get("validation") or blank_validation(manifest, waves)
+    # 版を置き換えたとき: 増えた値（manifest の accuracy）・波形の欄を足す（書いてある評価は残す）
     blank = blank_validation(manifest, waves)
     for group in ("values", "waveforms"):
-        current = entry["validation"].setdefault(group, {})
+        current = release["validation"].setdefault(group, {})
         for name, item in blank[group].items():
             current.setdefault(name, item)
-    registry["engines"] = [e for e in registry["engines"] if e["engine_key"] != key] + [entry]
+    entry["versions"] = sorted([v for v in entry["versions"] if v["version"] != version] + [release],
+                               key=lambda v: tuple(int(x) for x in v["version"].split(".")))
     registry["engines"].sort(key=lambda e: e["engine_key"].lower())
     registry["updated"] = date.today().isoformat()
     REGISTRY.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", "utf-8")
-    print(f"{key} {args.tag}（{entry['commit'][:12]}）を {'更新' if old else '追加'}しました")
+    print(f"{key} {args.tag}（{release['commit'][:12]}）を{'置き換え' if old else '追加し'}ました（版: {', '.join(v['version'] for v in entry['versions'])}）")
     if entry["ventilator"] is None:
         print("注意: ventilator（機種）がありません。--ventilator で指定してください")
     return 0
