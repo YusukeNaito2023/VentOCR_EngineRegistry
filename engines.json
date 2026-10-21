@@ -1902,6 +1902,188 @@
               }
             }
           }
+        },
+        {
+          "version": "0.1.2",
+          "tag": "v0.1.2",
+          "commit": "c4f00167a312b95895684140404f5ba19de26adc",
+          "core_version": "0.1.2",
+          "manifest": {
+            "engine_key": "V600_ventocr",
+            "display_name": "V600",
+            "developer": "VentOCR Developer Team",
+            "version": "0.1.2",
+            "ventocr_min": "0.6.2",
+            "description": "Draeger Savina 300 / V600 ventilator OCR engine. Breath = display update of VT. Waveforms: Pressure, Flow, Volume (filled curves) with wrap-around sweep tracked frame by frame; y-axis scale read by OCR.",
+            "sample_video": "V600_Sample.mp4",
+            "base_resolution": "1920x1080",
+            "supported_resolutions": [
+              "3840x2160",
+              "1920x1080"
+            ],
+            "has_extract_waves": true,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VT",
+                "Sweep_X",
+                "BreathMark"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "VT",
+                "Duration"
+              ]
+            },
+            "breath_summary": [
+              "VT",
+              "VT_displayed"
+            ],
+            "labels": {
+              "VT_displayed": "VT (displayed)"
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Pressure",
+                  "label": "Paw",
+                  "unit": "cmH2O",
+                  "color": "#d62728",
+                  "scale": {
+                    "min": "P_min",
+                    "max": "P_max"
+                  }
+                },
+                {
+                  "name": "Flow",
+                  "unit": "L/min",
+                  "color": "#1f77b4",
+                  "scale": {
+                    "min": "F_min",
+                    "max": "F_max"
+                  }
+                },
+                {
+                  "name": "Volume",
+                  "unit": "mL",
+                  "color": "#2ca02c",
+                  "scale": {
+                    "min": "V_min",
+                    "max": "V_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "VT",
+                  "label": "VT",
+                  "unit": "mL"
+                },
+                {
+                  "name": "VT_displayed",
+                  "label": "VT (displayed)",
+                  "unit": "mL"
+                }
+              ]
+            },
+            "accuracy": {
+              "VT": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "VT_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              }
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "skip_keys": [],
+              "use_gpu": true,
+              "diff_thresh": 3.0
+            },
+            "post_ocr": {
+              "boundary_shift_sec": -1.0,
+              "stable_frames": 3,
+              "min_breath_sec": 1.0,
+              "abnormal_screen_diff": 8.0,
+              "wave_split": true,
+              "split_flow": 5.0,
+              "split_lead_sec": 0.4,
+              "split_insp_sec": 0.15,
+              "split_min_insp_ml": 50.0,
+              "exhaled_ml": 30.0,
+              "exhaled_frac": 0.1,
+              "trim_to_breath": true
+            }
+          },
+          "readme": "# V600 VentOCR Engine\n\n## Supported Devices\n- Dräger Savina 300 / V600（右に VT・MV・呼吸回数・リーク%、左に 気道内圧 / フロー / ボリュームの3波形が並ぶ画面）\n- 3840x2160 または 1920x1080 で収録した動画（1920x1080 に縮小してから読む）\n\n## Description\n- **1呼吸** = VT の表示が更新されてから、次に更新されるまで\n  - 表示の更新は吸気の始まりより約0.6秒遅れるので、区切りは更新の `boundary_shift_sec`（既定 -1.0秒）前に置く（吸気の約0.4秒前で切れる）\n  - 新しい値が `stable_frames`（既定3）フレーム以上続いたときだけ更新とみなす（1〜2フレームの読み違いを無視）\n- **波形で補う区切り**（`wave_split`、既定で有効）: VT が前の呼吸と同じ値だと表示の更新が見えず、2呼吸が1つになる。\n  1呼吸の波形の中に2つ目の吸気の立ち上がり（フロー > `split_flow` 5 L/min）があり、その直前にボリュームが\n  基線まで戻っていれば（吐き切っていれば）別の呼吸として区切る（立ち上がりの `split_lead_sec` 0.4秒前）。\n  - 吐き切った = 直前0.2秒のボリューム ≤ max(`exhaled_ml` 30 mL, `exhaled_frac` 0.1 × 直前の最大ボリューム)\n  - 吐き切る前に次の吸気が来たもの（Reverse Triggering などの二峰性の1呼吸）は区切らず、Alert に `RT?`\n  - 新しい吸気のボリュームが `split_min_insp_ml`（50 mL）未満の立ち上がりは無視する\n  - 区切った呼吸は Breaths.csv の `Boundary` が `Waveform`（VT の更新で区切った呼吸は `VT`、最初の呼吸は `Start`）。\n    VT は区切る前の呼吸と同じ値（表示が変わらなかったため）\n  - 呼吸番号は時間順に振り直す（Frames.csv の BreathNumber も合わせる）\n- **OCR**: VT（リーク補正）。画面の VT は「直前の呼吸」の値なので、Breaths.csv の `VT` は次の呼吸の間に表示される値、\n  `VT_displayed` はその呼吸の間に表示されていた値\n- **波形**: Pressure、Flow、Volume。BreathCSVs/<n>.csv の列は X, Pressure, Flow, Volume\n  - 波形は基線から値まで塗りつぶして描かれる（強制換気は濃い青、自発呼吸は薄い青）。各列の値 = 基線から最も遠い塗りの端\n  - 縦軸のスケール（フロー ±100/±50、ボリューム 1000/500 など）は画面で変えられ、過去の波形も描き直される。\n    縦軸の最大値の数字を OCR し、呼吸ごとに波形を切り出したフレームのスケールで換算する（Breaths.csv の P_/F_/V_min・max）\n- **掃引**: 左から右へ描き、左端に戻って上書きする（wrap around）。戻る位置と速さが一定でないため、毎フレームのペン先を追跡する\n  - 右端（x=1362）に達したとき、または x≈1100 以降で次の呼吸が始まったときに左端（x=62）へ戻る（残りの右側は消去）\n  - 換気モードを変えると画面全体が消去される\n  - 速さはモードで変わる（サンプルでは 52 px/秒、PC-BIPAP の区間は 64 px/秒）\n  - ペン先 = 気道内圧の帯で、塗りの無い列（消去帯、幅約41px）の左端の1つ手前\n  - 各点の時刻 = `Wave_T0` + 行番号 / `Wave_Rate`（Breaths.csv）\n\n## Expected Layout\nSee `layout.jpg`（赤枠: OCR、緑枠: 波形の帯、赤線: 基線、灰枠: 読まない範囲、青枠: 画面確認用の縦軸目盛り）。\n\n## Alert（Breaths.csv）\n- `RT?`: 吐き切る前に次の吸気が来た二峰性の呼吸（Reverse Triggering など）。区切っていない\n- `Merged?`: 長さが前後の呼吸の中央値の1.7倍以上で、波形が無いため波形で区切れなかった呼吸\n  （波形を調べた呼吸は区切り済みなので付かない。残った長い呼吸は吸気が1回で、後に無呼吸がある）\n- `Abnormal`: 設定画面などのポップアップが波形の上に出ていた（波形は出力しない）\n- `Partial`: モード変更などで画面が消去され、波形の3割以上が残っていない\n- `Long`: 2回以上左端に戻った呼吸（最後の1周分だけ）\n- `Fragment`: 録画の最初と最後の呼吸\n\n## Limitations\n- VT が前の呼吸と同じ値のときは表示の更新が見えない。波形で補って区切る（サンプルでは8か所。PC-AC のように VT が安定していると起きやすい）\n- 気道内圧の縦軸の最小値は -5 で固定と仮定している（最大値は読み取る）。最大値 30 以外は未検証\n- PEEP 0（気道内圧の塗りが無い）ではペン先を検出できない\n\n## Author\n- VentOCR Developer Team\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VT": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "VT_displayed": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            }
+          }
         }
       ]
     }
