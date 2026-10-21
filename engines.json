@@ -133,6 +133,138 @@
               }
             }
           }
+        },
+        {
+          "version": "0.1.1",
+          "tag": "v0.1.1",
+          "commit": "1baeebd17f04a6382d3c05faffd3ab72e11c8d6f",
+          "core_version": "0.1.1",
+          "manifest": {
+            "engine_key": "bennett980_ventocr",
+            "engine_api": 3,
+            "display_name": "PB980",
+            "developer": "VentOCR Developer Team",
+            "version": "0.1.1",
+            "ventocr_min": "0.6.3",
+            "description": "Puritan Bennett 980 ventilator OCR engine (Pressure / Flow / Volume waveforms, VTE)",
+            "sample_video": "sample.mp4",
+            "supported_resolutions": [
+              "3840x2160",
+              "1920x1080",
+              "1280x720"
+            ],
+            "has_extract_waves": true,
+            "frame_check": false,
+            "frame_check_columns": [
+              "BM_Best"
+            ],
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VTE",
+                "Ppeak",
+                "BreathMark",
+                "BreathMark_char",
+                "BM_Best",
+                "Sweep_X",
+                "BM_Best_conf"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "Mode",
+                "VTE",
+                "VTE_raw",
+                "Ppeak",
+                "BreathMark_char",
+                "Fragmented",
+                "Alert"
+              ]
+            },
+            "breath_summary": [
+              "Mode",
+              "VTE",
+              "VTE_raw",
+              "Ppeak"
+            ],
+            "labels": {
+              "VTE_raw": "VTE (displayed)"
+            },
+            "accuracy": {
+              "VTE": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              }
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "skip_keys": [],
+              "sampling_size": 10,
+              "use_gpu": true
+            },
+            "post_ocr": {
+              "fps": 10,
+              "trim_to_breath": true
+            }
+          },
+          "readme": "# Bennett 980 VentOCR Engine\n\nAnalyzes Paw (Airway Pressure), Flow, and Volume from Bennett 980 ventilator display.\n\n## Setup\n\n1. Capture a screenshot of the Bennett 980 display\n2. Place it as `sample_frame.jpg` in this directory\n3. Open the image and measure pixel coordinates for each ROI\n4. Update `Settings.py` with the correct coordinates\n\n## ROI Configuration (Settings.py)\n\n```python\nROIs = {\n    \"Paw\":    [x, y, width, height],\n    \"Flow\":   [x, y, width, height],\n    \"Volume\": [x, y, width, height],\n}\n```\n\nCoordinates are measured from the top-left corner of the display image.\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VTE": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            }
+          }
         }
       ]
     },
