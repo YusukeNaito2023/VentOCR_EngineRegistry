@@ -23,7 +23,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "engines.json"
-WAVE_CHANNELS = ("Pressure", "Flow", "Volume", "Edi", "Pes")
+# manifest.json に outputs.waves（出力の宣言。ENGINE_API.md §8.1）が無い古いエンジンで、ソースの文字から探す波形の名前
+WAVE_CHANNELS = ("Pressure", "Flow", "Volume", "Edi", "Pes", "Ptranspulm")
 
 
 def git(repo: Path, *args: str) -> str:
@@ -78,7 +79,8 @@ def main() -> int:
     options_text = show(repo, args.tag, "engine_options.json")
     sources = core + "".join(show(repo, args.tag, f) or "" for f in git(repo, "ls-tree", "--name-only", args.tag).split()
                              if f.endswith(".py") and f != "core.py")
-    waves = [ch for ch in WAVE_CHANNELS if f'"{ch}"' in sources]
+    declared = [w.get("name") for w in ((manifest.get("outputs") or {}).get("waves") or []) if isinstance(w, dict) and w.get("name")]
+    waves = declared or [ch for ch in WAVE_CHANNELS if f'"{ch}"' in sources]
 
     repository = args.repository
     if not repository:

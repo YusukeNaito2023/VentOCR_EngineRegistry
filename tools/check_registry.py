@@ -19,6 +19,39 @@ RESULT = ("metric", "result", "n", "comment")
 VERSION = re.compile(r"0\.(\d+)\.(\d+)")
 
 
+COLOR = re.compile(r"#[0-9a-fA-F]{6}")
+
+
+def check_outputs(where: str, outputs) -> list[str]:
+    """manifest.json の outputs（出力の宣言。ENGINE_API.md §8.1）の形。"""
+    if outputs is None:
+        return []
+    if not isinstance(outputs, dict):
+        return [f"{where}: outputs は {{\"waves\": [...], \"breath_values\": [...]}}"]
+    problems = []
+    for group in ("waves", "breath_values"):
+        items = outputs.get(group) or []
+        if not isinstance(items, list):
+            problems.append(f"{where}: outputs.{group} はリスト")
+            continue
+        names = [i.get("name") for i in items if isinstance(i, dict)]
+        if len(names) != len(items) or not all(isinstance(n, str) and n for n in names):
+            problems.append(f"{where}: outputs.{group} の各項目に name（文字）が要る")
+        if len(set(names)) != len(names):
+            problems.append(f"{where}: outputs.{group} の name が重複している")
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            if item.get("color") and not COLOR.fullmatch(str(item["color"])):
+                problems.append(f"{where}: outputs.{group}.{item.get('name')}.color は #rrggbb")
+            scale = item.get("scale")
+            if scale is not None and not (isinstance(scale, dict) and (
+                    (scale.get("min") and scale.get("max")) or
+                    (isinstance(scale.get("range"), list) and len(scale["range"]) == 2))):
+                problems.append(f"{where}: outputs.{group}.{item.get('name')}.scale は {{min, max}} か {{range: [下, 上]}}")
+    return problems
+
+
 def check_version(name: str, r: dict) -> list[str]:
     version = r.get("version", "")
     where = f"{name} {version or '?'}"
@@ -34,6 +67,10 @@ def check_version(name: str, r: dict) -> list[str]:
         problems.append(f"{where}: core_version（ENGINE_VERSION = {r.get('core_version')}）が版と違います")
     if manifest.get("engine_key") != name:
         problems.append(f"{where}: manifest の engine_key が違います")
+    problems += check_outputs(where, manifest.get("outputs"))
+    vmin = manifest.get("ventocr_min")
+    if vmin is not None and not re.fullmatch(r"\d+\.\d+\.\d+", str(vmin)):
+        problems.append(f"{where}: manifest の ventocr_min は X.Y.Z")
     if not re.fullmatch(r"[0-9a-f]{40}", r.get("commit") or ""):
         problems.append(f"{where}: commit は 40 桁のコミット")
     v = r.get("validation") or {}
