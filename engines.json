@@ -655,6 +655,241 @@
               "Frame Read Error"
             ]
           }
+        },
+        {
+          "version": "0.1.4",
+          "tag": "v0.1.4",
+          "commit": "7a4dd68128fca1982c39b5ab65a16de271656c33",
+          "core_version": "0.1.4",
+          "manifest": {
+            "engine_key": "bennett980_ventocr",
+            "engine_api": 3,
+            "display_name": "PB980",
+            "developer": "VentOCR Developer Team",
+            "version": "0.1.4",
+            "ventocr_min": "0.6.3",
+            "description": "Puritan Bennett 980 ventilator OCR engine (Pressure / Flow / Volume waveforms, VTE)",
+            "sample_video": "sample.mp4",
+            "supported_resolutions": [
+              "3840x2160",
+              "1920x1080",
+              "1280x720"
+            ],
+            "has_extract_waves": true,
+            "frame_check": false,
+            "frame_check_columns": [
+              "BM_Best"
+            ],
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VTE",
+                "Ppeak",
+                "BreathMark",
+                "BreathMark_char",
+                "BM_Best",
+                "Sweep_X",
+                "BM_Best_conf"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "Mode",
+                "VTE",
+                "VTE_raw",
+                "Ppeak",
+                "BreathMark_char",
+                "Fragmented",
+                "Alert"
+              ]
+            },
+            "breath_summary": [
+              "Mode",
+              "VTE",
+              "VTE_raw",
+              "Ppeak"
+            ],
+            "labels": {
+              "VTE_raw": "VTE (displayed)"
+            },
+            "accuracy": {
+              "VTE": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              }
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Pressure",
+                  "label": "Paw",
+                  "unit": "cmH2O",
+                  "color": "#d62728",
+                  "scale": {
+                    "min": "P_min",
+                    "max": "P_max"
+                  }
+                },
+                {
+                  "name": "Flow",
+                  "unit": "L/min",
+                  "color": "#1f77b4",
+                  "scale": {
+                    "min": "F_min",
+                    "max": "F_max"
+                  }
+                },
+                {
+                  "name": "Volume",
+                  "unit": "mL",
+                  "color": "#2ca02c",
+                  "scale": {
+                    "min": "V_min",
+                    "max": "V_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "Mode",
+                  "label": "Mode (A / C / S)"
+                },
+                {
+                  "name": "VTE",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Ppeak",
+                  "label": "Ppeak (peak pressure)",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "VTE_raw",
+                  "label": "VTE (displayed)",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                }
+              ],
+              "alerts": [
+                {
+                  "name": "Fragment",
+                  "label": "Cut at the right edge of the screen or the first breath of the recording (partial waveform)",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Abnormal",
+                  "label": "Contains frames whose breath icon matches no reference (settings screen, disconnection, etc.)",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "No Sweep",
+                  "label": "Sweep line not found; waveform not extracted",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Settings Change",
+                  "label": "Settings screen covered the waveform area",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Invalid Range",
+                  "label": "Could not determine the waveform range",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Empty Waveform",
+                  "label": "Extracted waveform was empty",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Frame Read Error",
+                  "label": "Could not read the end frame image",
+                  "exclude_from_accuracy": true
+                }
+              ]
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "skip_keys": [],
+              "sampling_size": 10,
+              "use_gpu": true
+            },
+            "post_ocr": {
+              "fps": 10,
+              "trim_to_breath": true,
+              "smoothing": false,
+              "imputation": false
+            }
+          },
+          "readme": "# Bennett 980 VentOCR Engine\n\nAnalyzes Paw (Airway Pressure), Flow, and Volume from Bennett 980 ventilator display.\n\n## Setup\n\n1. Capture a screenshot of the Bennett 980 display\n2. Place it as `sample_frame.jpg` in this directory\n3. Open the image and measure pixel coordinates for each ROI\n4. Update `Settings.py` with the correct coordinates\n\n## ROI Configuration (Settings.py)\n\n```python\nROIs = {\n    \"Paw\":    [x, y, width, height],\n    \"Flow\":   [x, y, width, height],\n    \"Volume\": [x, y, width, height],\n}\n```\n\nCoordinates are measured from the top-left corner of the display image.\n\n## Alert (the Alert column of Breaths.csv)\n\n| Value | Meaning | Accuracy evaluation |\n|---|---|---|\n| Fragment | Cut at the right edge of the screen, or the first breath of the recording (partial waveform) | Excluded |\n| Abnormal | Contains frames whose breath icon (top left) matches no reference (settings screen, disconnection, etc.) | Excluded |\n| No Sweep | Sweep line not found; waveform not extracted | Excluded |\n| Settings Change | The settings screen covered the waveform area | Excluded |\n| Invalid Range | Could not determine the waveform range | Excluded |\n| Empty Waveform | Extracted waveform was empty | Excluded |\n| Frame Read Error | Could not read the end frame image | Excluded |\n\nSeveral values in one breath are separated by \", \" (comma and space), e.g. \"Abnormal, Fragment\". The list is also in outputs.alerts of manifest.json (ENGINE_API.md §8.1).\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VTE": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "excluded_alerts": [
+              "Fragment",
+              "Abnormal",
+              "No Sweep",
+              "Settings Change",
+              "Invalid Range",
+              "Empty Waveform",
+              "Frame Read Error"
+            ]
+          }
         }
       ]
     },
@@ -3399,6 +3634,277 @@
               }
             }
           }
+        },
+        {
+          "version": "0.1.2",
+          "tag": "v0.1.2",
+          "commit": "991133ff8a66ce3571b4e8b3dbd31b7e17747daf",
+          "core_version": "0.1.2",
+          "manifest": {
+            "engine_key": "nava_ventocr",
+            "display_name": "NAVA",
+            "developer": "VentOCR Developer Team",
+            "version": "0.1.2",
+            "ventocr_min": "0.6.2",
+            "description": "Servo-U ventilator Edi waveform OCR engine (resolution-independent; frames normalized to 1280x720). v1.3: waveform points are chosen from the vertical extent of the trace in each column (globally optimal path with peak/valley tips preserved), removing false spikes at steep transitions; Flow scale fit excludes steep segments. v1.4: abnormal frames (pop-ups) are detected in initial_ocr from in-memory frames (Frames.csv column Abnormal); post-processing reads only the frames used for waveform extraction (engine_api 3); frame counts follow GS.FPS (engine_api 2). v1.5: faster (same results as v1.4): grayscale and downscale only the regions read, reuse the EasyOCR reader, open frame images in ascending order.",
+            "engine_api": 3,
+            "sample_video": "Sample_NAVA_VentOCR.mp4",
+            "base_resolution": "1280x720",
+            "supported_resolutions": [
+              "1280x720",
+              "1920x1080"
+            ],
+            "has_extract_waves": false,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VTi",
+                "VTe",
+                "Cdyn",
+                "Triggered",
+                "BreathMark",
+                "Ppeak",
+                "Abnormal"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "Cdyn",
+                "VTe",
+                "Real_VTe",
+                "Real_Ppeak",
+                "Real_VTi"
+              ]
+            },
+            "breath_summary": [
+              "VTe",
+              "Real_VTe",
+              "Real_VTi",
+              "Real_Ppeak",
+              "EdiPeak",
+              "Cdyn",
+              "IE_Ratio"
+            ],
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Pressure",
+                  "label": "Paw",
+                  "unit": "cmH2O",
+                  "color": "#d62728",
+                  "scale": {
+                    "min": "P_min",
+                    "max": "P_max"
+                  }
+                },
+                {
+                  "name": "Flow",
+                  "unit": "L/min",
+                  "color": "#1f77b4",
+                  "scale": {
+                    "min": "F_min",
+                    "max": "F_max"
+                  }
+                },
+                {
+                  "name": "Volume",
+                  "unit": "mL",
+                  "color": "#2ca02c",
+                  "scale": {
+                    "min": "V_min",
+                    "max": "V_max"
+                  }
+                },
+                {
+                  "name": "Edi",
+                  "unit": "µV",
+                  "color": "#9467bd",
+                  "scale": {
+                    "min": "E_min",
+                    "max": "E_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "Real_VTe",
+                  "label": "VTe",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Real_VTi",
+                  "label": "VTi",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Real_Ppeak",
+                  "label": "Ppeak",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "EdiPeak",
+                  "label": "Edi peak",
+                  "unit": "µV",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "IE_Ratio",
+                  "label": "I:E ratio",
+                  "format": "{:.2f}"
+                },
+                {
+                  "name": "VTe",
+                  "label": "VTe (displayed)",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Cdyn",
+                  "label": "Cdyn (displayed)",
+                  "unit": "mL/cmH2O",
+                  "format": "{:.1f}"
+                }
+              ],
+              "alerts": [
+                {
+                  "name": "Two_Breath",
+                  "label": "At least 1.5x the neighbouring breaths (possibly two breaths merged)",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Fragment",
+                  "label": "At most half the neighbouring breaths (possibly a fragment)",
+                  "exclude_from_accuracy": true
+                }
+              ]
+            },
+            "accuracy": {
+              "VTe": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "VTi": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "Cdyn": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL/cmH2O"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              }
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "skip_keys": [],
+              "similarity_thresh": 0.9,
+              "sampling_size": 10,
+              "use_gpu": true,
+              "diff_gating": true,
+              "diff_thresh": 2.0,
+              "diff_thresh_cdyn": 0.5,
+              "recognize_conf_fallback": 0.5
+            },
+            "post_ocr": {
+              "imputation_col": [
+                "VTe",
+                "EdiPeak"
+              ],
+              "smoothing": false,
+              "imputation": false,
+              "scale": {
+                "enabled": true
+              },
+              "trim_to_breath": true,
+              "detect_sweep_line": false
+            }
+          },
+          "readme": "# NAVA Engine (nava_ventocr)\n\n## Version\n\n0.1.2 (see CHANGELOG.md)\n\n### Changes in 0.1.1 and 0.1.2\n\n- 0.1.2: added the output declaration `outputs` to manifest.json (waves, breath_values, alerts; VentOCR 0.6.2 and later). The engine no longer uses Japanese (labels, messages, README, comments).\n- 0.1.1: fixed analyses stopping with a KeyError when there are two or fewer breath boundaries (for example a video from another ventilator); such videos now finish with zero breaths.\n\n### Changes in 0.1.0 (formerly v1.5.0)\n\n- Faster analysis (same results as v1.4): grayscale and downscale only the regions that are read, reuse the EasyOCR Reader, and open the images used in post-processing in ascending frame order. 36% faster than v1.4 on a one-hour video.\n- The engine key became `nava_ventocr` (earlier versions used `nava_ventocr_v1_X`) and versions are numbered 0.X.Y.\n- Details in CHANGELOG.md\n\n### Changes in v1.4\n\n- Faster analysis: post-processing no longer reads the JPEG of every frame (engine_api 3). Abnormal frames (pop-ups, etc.) are detected inside initial_ocr from the frames in memory and recorded in the `Abnormal` column of Frames.csv.\n- A breath's waveform is skipped only when the start or end image used to read it is Abnormal (up to v1.3, a single Abnormal frame anywhere in the breath skipped it).\n- Seconds are converted to frame counts with `GS.FPS` (same results as v1.3 at 10 fps).\n- Details in CHANGELOG.md\n\n### Changes in v1.3\n\n- Changed how waveform points are chosen (`ExtractWaves._extract_waveform`). v1.2 took the single pixel with the closest hue in each column, so at steep transitions (a vertical line in one column) the chosen height was essentially random and produced spikes that are not on the screen.\n  v1.3 takes the vertical extent of the trace in each column, draws the optimal path over the whole breath, and keeps the tips of V-shaped valleys and peaks.\n- The Flow scale estimate excludes segments where Flow changes steeply, and `FLOW_GAIN` changed from 1.06 to 1.05.\n- Fixed the smoothing option having no effect (still OFF by default).\n- Waveform CSVs are trimmed to the breath (inspiration onset to the next inspiration onset; `trim_to_breath`, ON by default).\n  The end of the previous breath's expiration and the rise of the next breath are removed; timing is kept with Wave_T0 / Wave_Rate in Breaths.csv.\n- Details in CHANGELOG.md\n\n### Changes in v1.2\n\n- Waveform color matching changed from BGR Euclidean distance to **HSV (hue) based** matching.\n  Hue is robust to lower brightness and saturation, so the **steep rise of Pressure**, which became dark and blended by anti-aliasing when a high-resolution video (1920x1080) was downscaled to 1280x720, is detected without gaps.\n  ROIs, color definitions and the post-processing interface are compatible with v1.1.\n\n## Overview\n\nNAVA Engine is a waveform analysis module designed for Servo-i ventilator images.  \nIt extracts numerical parameters such as VTi, VTe, Cdyn, and Edi from waveform screenshots using OCR and image processing techniques, and structures them into breath-by-breath datasets.\n\nThis engine integrates:\n\n- OCR-based value extraction (EasyOCR)\n- Histogram-based trigger detection (OpenCV)\n- Noise filtering and anomaly exclusion\n- Breath segmentation and reconstruction\n\nThe engine is optimized for GPU acceleration.\n\n---\n\n## Architecture\n\n### File Structure\n\n```\nEngine/NAVA/\n├ core.py\n├ ExtractWaves.py\n├ sample_frame.jpg\n└ README.md\n```\n\n---\n\n## Dependencies\n\n- EasyOCR (GPU supported)\n- OpenCV\n- pandas\n- numpy\n- tqdm\n- re, gc\n\n---\n\n## Input\n\n### Required Inputs\n\n- `grayed_frame`  \n  List of grayscale frames (OpenCV format)\n\n- `total_frames`  \n  Total number of frames\n\n---\n\n## Processing Pipeline\n\n---\n\n### 1. Initial OCR (`initial_ocr`)\n\n#### 1.1 Preprocessing\n\n- Load `sample_frame.jpg`\n- Compute histogram for Triggered ROI\n- Extract ROIs based on predefined coordinates (`Settings.ROIs`)\n\n---\n\n#### 1.2 ROI Processing\n\n| ROI Name | Method |\n|--------|------|\n| Triggered | Histogram correlation (cv2.HISTCMP_CORREL) |\n| VTi, VTe, Cdyn | EasyOCR → numeric cleaning |\n\n---\n\n#### Trigger Detection Logic\n\n- Correlation > 0.9 → Not Triggered (0)\n- Correlation ≤ 0.9 → Triggered (1)\n\n---\n\n#### OCR Normalization\n\n- Remove multiple decimal points\n- Empty → 0\n\n---\n\n#### Output\n\nFrame-level DataFrame:\n\n```\nFrame | VTi | VTe | Cdyn | Triggered\n```\n\n---\n\n### 2. Post Processing (`post_ocr`)\n\n---\n\n#### 2.1 Cdyn Correction\n\n- If Cdyn > 100 → divide by 10\n- Isolated values → set as NaN\n- BreathNumber assigned at Cdyn transition points\n\n---\n\n#### 2.2 Mode Value Completion\n\nFor each breath:\n\n- VTe → replaced with mode\n- Edi Peak → replaced with mode\n\n---\n\n#### 2.3 Time Calculation\n\n- Based on Frame index and FPS\n- Format:\n\n```\nhh:mm:ss:cc\n```\n\n---\n\n### 3. Breath Structuring\n\n---\n\n#### 3.1 Representative Frame Extraction\n\n- First frame of each BreathNumber is used\n\n---\n\n#### 3.2 Filtering Short Breaths\n\n- Frame difference ≤ 13 → excluded\n- Merged into previous breath\n\n---\n\n#### 3.3 Real VTe Assignment\n\n- Ventilator displays delayed VTe\n- Assigned to previous breath as:\n\n```\nReal_VTe\n```\n\n---\n\n### 4. Abnormal Detection\n\n---\n\n#### 4.1 AbnormalFrameDetector (inside initial_ocr)\n\n- Compares the `ROI_LIST_Abnormal_Detection` regions of each frame with the median of the non-black frames of the segment (mean difference, standard-deviation difference, histogram correlation)\n- Recorded in Frames.csv:\n\n```\nAbnormal = 1\n```\n\n- A breath whose start or end image (used to read the waveform) is Abnormal gets no waveform\n\n---\n\n#### 4.2 BreathsToCSVs()\n\n- Each valid breath saved as:\n\n```\nBreathCSVs/1.csv\nBreathCSVs/2.csv\n...\n```\n\n---\n\n## Output\n\n---\n\n### Frame-level Data\n\n```\ndf_frames\n```\n\n---\n\n### Breath-level Data\n\n```\ndf_breath\n```\n\nIncludes:\n\n- Cdyn\n- VTe\n- Real_VTe\n- BreathNumber\n\n---\n\n## Exception Handling\n\n- OCR failure → 0 or NaN\n- Trigger detection uses histogram (not OCR)\n- Missing `sample_frame.jpg` → Exception\n\n---\n\n## Use Cases\n\n- NAVA waveform analysis\n- Edi signal extraction\n- Preprocessing for annotation\n- Research / development datasets\n\n---\n\n## Limitations\n\n- OCR accuracy depends on image quality\n- Requires correct ROI configuration\n- Sensitive to UI layout changes\n\n---\n\n## Author\n\nVentOCR Developer Team  \nContact: naito623@naramed-u.ac.jp\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume",
+            "Edi"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VTe": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "VTi": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Cdyn": {
+                "unit": "mL/cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Edi": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "excluded_alerts": [
+              "Two_Breath",
+              "Fragment"
+            ]
+          }
         }
       ]
     },
@@ -3792,6 +4298,259 @@
                 "comment": ""
               }
             }
+          }
+        },
+        {
+          "version": "0.2.0",
+          "tag": "v0.2.0",
+          "commit": "56699ecd85799e1498d0b60855ce10ae2c154f7d",
+          "core_version": "0.2.0",
+          "manifest": {
+            "engine_key": "postnava_ventocr",
+            "display_name": "PostNAVA",
+            "developer": "VentOCR Developer Team",
+            "version": "0.2.0",
+            "ventocr_min": "0.6.2",
+            "engine_api": 3,
+            "description": "Servo-U Edi monitor screen (e.g. after NAVA / standby). OCR: Edipeak, Edimin. Breath = Edimin display update (neural inspiration onset). Waveform: Edi with wrap-around sweep (about 164 px/s, 5.4 s per sweep on 1280x720).",
+            "sample_video": "PostNAVA_VentOCR_sample.mp4",
+            "base_resolution": "1280x720",
+            "supported_resolutions": [
+              "1280x720"
+            ],
+            "has_extract_waves": true,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "EdiPeak",
+                "Edimin",
+                "EdiPeak_Update",
+                "Edimin_Update",
+                "Sweep_X",
+                "BreathMark",
+                "BreathNumber",
+                "Abnormal"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "EdiPeak",
+                "Edimin",
+                "Edimin_displayed",
+                "Duration",
+                "Wave_Max",
+                "Wave_Min",
+                "Clipped_Points",
+                "Alert"
+              ],
+              "waves": [
+                "X",
+                "Edi"
+              ]
+            },
+            "breath_summary": [
+              "EdiPeak",
+              "Edimin",
+              "Edimin_displayed",
+              "Wave_Max",
+              "Clipped_Points"
+            ],
+            "labels": {
+              "Edimin_displayed": "Edimin (displayed)",
+              "Wave_Max": "Edi max (waveform)",
+              "Clipped_Points": "Clipped points"
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Edi",
+                  "unit": "µV",
+                  "color": "#9467bd",
+                  "scale": {
+                    "min": "E_min",
+                    "max": "E_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "EdiPeak",
+                  "label": "EdiPeak",
+                  "unit": "µV"
+                },
+                {
+                  "name": "Edimin",
+                  "label": "Edimin",
+                  "unit": "µV"
+                },
+                {
+                  "name": "Edimin_displayed",
+                  "label": "Edimin (displayed)",
+                  "unit": "µV"
+                },
+                {
+                  "name": "Wave_Max",
+                  "label": "Edi max (waveform)",
+                  "unit": "µV"
+                },
+                {
+                  "name": "Clipped_Points",
+                  "label": "Clipped points"
+                }
+              ],
+              "alerts": [
+                {
+                  "name": "Fragment",
+                  "label": "Cut at the start or end of the recording",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "ScaleChanged",
+                  "label": "Edi axis range changed during the breath (no waveform)",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Abnormal",
+                  "label": "Contains frames of another screen or a popup",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "OnsetEstimated",
+                  "label": "Edimin update not seen; breath onset estimated",
+                  "exclude_from_accuracy": false
+                },
+                {
+                  "name": "NoBreathDetected",
+                  "label": "The ventilator detected no breath (Edipeak \"***\")",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Clipped",
+                  "label": "Waveform clipped at the top of the axis",
+                  "exclude_from_accuracy": true
+                }
+              ]
+            },
+            "accuracy": {
+              "EdiPeak": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "Edimin": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "Edimin_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "Wave_Max": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "Wave_Min": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              }
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "skip_keys": [],
+              "use_gpu": true,
+              "diff_thresh": 2.0
+            },
+            "post_ocr": {
+              "fps": 10,
+              "edi_scale_max": 20,
+              "min_breath_sec": 0.3,
+              "max_onset_lag_sec": 1.5,
+              "onset_shift_sec": -0.3,
+              "abnormal_screen_diff": 15.0,
+              "abnormal_scale_diff": 8.0
+            }
+          },
+          "readme": "# PostNAVA VentOCR Engine (postnava_ventocr)\n\n## Supported Devices\n- Servo-U \"Edi monitor\" screen (ECG at the top, Edi waveform in the middle, Edipeak / Edimin values on the right; e.g. after weaning from NAVA, in standby)\n- Videos recorded at 1280x720 (other resolutions are scaled to 1280x720 before reading)\n\n## Description\n- **OCR**: Edipeak and Edimin (values on the right). Only frames where the display changed are OCR'd\n  - If no breath is detected for about 10 s, both become \"***\" (no value; `NoBreathDetected` in that breath's Alert)\n- **1 breath** = from an Edimin display update to the next breath's Edimin update\n  - The Servo-U updates Edimin when Edi rises (onset of neural inspiration), and Edipeak after Edi passes its peak and starts to fall (about 0.35 s later)\n  - When a value equals the previous one the display does not change and the update is invisible, so breaths are counted by Edipeak updates, and the Edimin update just before each (within `max_onset_lag_sec`) is taken as the onset.\n    If it is invisible, the onset is estimated from the typical lag (0.4 s in the sample) (`OnsetEstimated` in Alert)\n  - The Edimin update lags slightly behind the Edi rise (median 0.1 s after passing 20% of the height), so the boundary is placed `onset_shift_sec` (default -0.3 s) earlier\n- **Values in Breaths.csv**\n  - `EdiPeak`: the Edipeak shown for that breath\n  - `Edimin`: minimum of that breath's expiration = the Edimin shown at the next breath's onset (verified to match the waveform minimum).\n    `Edimin_displayed` is the value shown during that breath (= minimum of the previous breath's expiration)\n  - `Wave_Max` / `Wave_Min`: maximum / minimum of the extracted waveform (µV)\n- **Waveform**: Edi (columns of BreathCSVs/<n>.csv are X, Edi; unit µV)\n  - The sweep draws left to right at about 164 px/s; on reaching x=1046 it returns to x=150 and overwrites (one sweep 896 px ≈ 5.4 s, wrap around)\n  - In each frame, the blank where neither ECG nor Edi is drawn (the erase band ahead of the pen tip, about 35-40 px wide) is located and taken as the pen tip;\n    the sweep speed and phase are estimated from the whole video to determine the pen tip in each frame (false blanks, e.g. while Edi is not drawn, are removed as outliers)\n  - A breath's waveform is cut out from the image of that breath's last frame as \"the column after the start pen tip through the end pen tip column\".\n    For breaths longer than one sweep (about 5.4 s), the missing earlier part is cut out from images of earlier frames and joined (`Wave_Images` = number of images used)\n  - Time of each point = `Wave_T0` + row number / `Wave_Rate` (Breaths.csv)\n  - Vertical axis: 0 µV = panel bottom edge (y=419.4), 20 µV = panel top edge (y=219.4). 10.0 px/µV (calibrated with 24 breaths' Edipeak in the sample, residual SD 0.1 µV)\n  - Parts above the vertical-axis upper limit are not drawn, so they are clipped at the upper-limit value (20 µV) (`Clipped_Points` = number of such points, `Clipped` in Alert).\n    For such breaths, the on-screen Edipeak value is the correct one\n\n## Expected Layout\nSee `layout.jpg` (red boxes: OCR, white box: Edi waveform, gray box: ECG used to detect the sweep position, yellow box: Edi bar (excluded), blue boxes: text for the screen check and the vertical-axis scale label).\n\n## Limitations\n- The vertical-axis upper limit is a setting (`edi_scale_max`, default 20 µV). The scale label \"20\" is too small to OCR, so frames that differ from the reference image (`scale_reference.png`)\n  are marked Abnormal and that breath's waveform is not output (`ScaleChanged` in Alert). For videos with a different upper limit, set `edi_scale_max` accordingly and recreate the reference image\n- Parts above the vertical-axis upper limit (20 µV) are clipped (see above)\n- Breath boundaries follow the Servo-U's breath detection (display updates). Small Edi fluctuations may also be counted as one breath\n- The first and last breaths of a recording are cut off partway (`Fragment` in Alert)\n- Columns overlapping the Edi bar at the right edge (x=1000-1048) and the white dashed line (x=1003-1007, 1041-1045) are not read; they are interpolated from both neighbors\n\n## Author\n- VentOCR Developer Team\n- Contact: naito623@naramed-u.ac.jp\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Edi"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "EdiPeak": {
+                "unit": "µV",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Edimin": {
+                "unit": "µV",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Edimin_displayed": {
+                "unit": "µV",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Wave_Max": {
+                "unit": "µV",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Wave_Min": {
+                "unit": "µV",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Edi": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "excluded_alerts": [
+              "Fragment",
+              "ScaleChanged",
+              "Abnormal",
+              "NoBreathDetected",
+              "Clipped"
+            ]
           }
         }
       ]
@@ -4301,9 +5060,230 @@
               }
             }
           }
+        },
+        {
+          "version": "0.2.0",
+          "tag": "v0.2.0",
+          "commit": "070c2f1585aa30895d62d66d11e38376e0b24b09",
+          "core_version": "0.2.0",
+          "manifest": {
+            "engine_key": "V600_ventocr",
+            "display_name": "V600",
+            "developer": "VentOCR Developer Team",
+            "version": "0.2.0",
+            "ventocr_min": "0.6.2",
+            "engine_api": 3,
+            "description": "Draeger Savina 300 / V600 ventilator OCR engine. Breath = display update of VT. Waveforms: Pressure, Flow, Volume (filled curves) with wrap-around sweep tracked frame by frame; y-axis scale read by OCR.",
+            "sample_video": "V600_Sample.mp4",
+            "base_resolution": "1920x1080",
+            "supported_resolutions": [
+              "3840x2160",
+              "1920x1080"
+            ],
+            "has_extract_waves": true,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VT",
+                "Sweep_X",
+                "BreathMark"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "VT",
+                "Duration"
+              ]
+            },
+            "breath_summary": [
+              "VT",
+              "VT_displayed"
+            ],
+            "labels": {
+              "VT_displayed": "VT (displayed)"
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Pressure",
+                  "label": "Paw",
+                  "unit": "cmH2O",
+                  "color": "#d62728",
+                  "scale": {
+                    "min": "P_min",
+                    "max": "P_max"
+                  }
+                },
+                {
+                  "name": "Flow",
+                  "unit": "L/min",
+                  "color": "#1f77b4",
+                  "scale": {
+                    "min": "F_min",
+                    "max": "F_max"
+                  }
+                },
+                {
+                  "name": "Volume",
+                  "unit": "mL",
+                  "color": "#2ca02c",
+                  "scale": {
+                    "min": "V_min",
+                    "max": "V_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "VT",
+                  "label": "VT",
+                  "unit": "mL"
+                },
+                {
+                  "name": "VT_displayed",
+                  "label": "VT (displayed)",
+                  "unit": "mL"
+                }
+              ],
+              "alerts": [
+                {
+                  "name": "Fragment",
+                  "label": "Cut at the start or end of the recording",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Abnormal",
+                  "label": "Contains popup or other-screen frames",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Long",
+                  "label": "Took more than one sweep; only the last sweep",
+                  "exclude_from_accuracy": false
+                },
+                {
+                  "name": "Partial",
+                  "label": "More than 30% of the waveform missing (screen cleared, etc.)",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "RT?",
+                  "label": "Biphasic breath: next inspiration before full expiration (e.g. reverse triggering)",
+                  "exclude_from_accuracy": false
+                },
+                {
+                  "name": "Merged?",
+                  "label": "At least 1.7x the neighbouring breaths (possibly two breaths merged)",
+                  "exclude_from_accuracy": true
+                }
+              ]
+            },
+            "accuracy": {
+              "VT": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "VT_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              }
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "skip_keys": [],
+              "use_gpu": true,
+              "diff_thresh": 3.0
+            },
+            "post_ocr": {
+              "boundary_shift_sec": -1.0,
+              "stable_frames": 3,
+              "min_breath_sec": 1.0,
+              "abnormal_screen_diff": 8.0,
+              "wave_split": true,
+              "split_flow": 5.0,
+              "split_lead_sec": 0.4,
+              "split_insp_sec": 0.15,
+              "split_min_insp_ml": 50.0,
+              "exhaled_ml": 30.0,
+              "exhaled_frac": 0.1,
+              "trim_to_breath": true
+            }
+          },
+          "readme": "# V600 VentOCR Engine\n\n## Supported Devices\n- Dräger Savina 300 / V600 (screen with VT, MV, respiratory rate, and leak % on the right, and three waveforms — airway pressure / flow / volume — on the left)\n- Videos recorded at 3840x2160 or 1920x1080 (downscaled to 1920x1080 before reading)\n\n## Description\n- **1 breath** = from one update of the VT display until the next update\n  - The display update lags the start of inspiration by about 0.6 s, so the boundary is placed `boundary_shift_sec` (default -1.0 s) before the update (cutting about 0.4 s before inspiration)\n  - A change counts as an update only when the new value lasts at least `stable_frames` (default 3) frames (misreads of 1-2 frames are ignored)\n- **Waveform-based splits** (`wave_split`, enabled by default): if VT has the same value as the previous breath, the display update is not visible and two breaths merge into one.\n  If a breath's waveform contains a second inspiratory onset (flow > `split_flow` 5 L/min) and the volume has returned\n  to baseline (fully exhaled) just before it, it is split off as a separate breath (`split_lead_sec` 0.4 s before the onset).\n  - Fully exhaled = volume over the preceding 0.2 s ≤ max(`exhaled_ml` 30 mL, `exhaled_frac` 0.1 × preceding max volume)\n  - If the next inspiration arrives before full exhalation (a single biphasic breath, e.g. Reverse Triggering), it is not split and Alert gets `RT?`\n  - Onsets whose new inspiratory volume is below `split_min_insp_ml` (50 mL) are ignored\n  - Split breaths have `Boundary` = `Waveform` in Breaths.csv (breaths split by a VT update have `VT`, and the first breath has `Start`).\n    VT is the same value as the breath before the split (because the display did not change)\n  - Breath numbers are reassigned in time order (BreathNumber in Frames.csv is updated to match)\n- **OCR**: VT (leak-compensated). The on-screen VT is the value of the \"previous breath\", so `VT` in Breaths.csv is the value displayed during the next breath,\n  and `VT_displayed` is the value that was displayed during that breath\n- **Waveforms**: Pressure, Flow, Volume. Columns of BreathCSVs/<n>.csv are X, Pressure, Flow, Volume\n  - Waveforms are drawn filled from the baseline to the value (mandatory breaths in dark blue, spontaneous breaths in light blue). Value of each column = the edge of the fill farthest from the baseline\n  - The vertical-axis scale (flow ±100/±50, volume 1000/500, etc.) can be changed on screen, and past waveforms are redrawn too.\n    The vertical-axis max number is OCR'd, and each breath is converted using the scale of the frame its waveform was cut from (P_/F_/V_min and max in Breaths.csv)\n- **Sweep**: drawn left to right, then returns to the left edge and overwrites (wrap around). The return position and speed are not constant, so the pen tip is tracked in every frame\n  - It returns to the left edge (x=62) when it reaches the right edge (x=1362), or when the next breath starts at x≈1100 or beyond (the remaining right side is erased)\n  - Changing the ventilation mode clears the whole screen\n  - The speed depends on the mode (52 px/s in the sample, 64 px/s in the PC-BIPAP segment)\n  - Pen tip = in the airway pressure band, one column before the left end of the unfilled columns (erase band, about 41px wide)\n  - Time of each point = `Wave_T0` + row index / `Wave_Rate` (Breaths.csv)\n\n## Expected Layout\nSee `layout.jpg` (red boxes: OCR, green boxes: waveform bands, red lines: baselines, gray boxes: areas not read, blue box: vertical-axis ticks used for the screen check).\n\n## Alert (Breaths.csv)\n- `RT?`: biphasic breath where the next inspiration came before full exhalation (e.g. Reverse Triggering). Not split\n- `Merged?`: a breath at least 1.7x the median duration of the surrounding breaths that could not be split by waveform because it has no waveform\n  (not set on breaths whose waveform was examined, since those are already split; remaining long breaths have a single inspiration followed by apnea)\n- `Abnormal`: a popup such as a settings screen was shown over the waveforms (no waveform is output)\n- `Partial`: the screen was cleared (e.g. mode change) and 30% or more of the waveform is missing\n- `Long`: a breath that returned to the left edge two or more times (only the last sweep is used)\n- `Fragment`: the first and last breaths of the recording\n\n## Limitations\n- When VT has the same value as the previous breath, the display update is not visible. Breaths are split using the waveform instead (8 places in the sample; this happens more often when VT is stable, as in PC-AC)\n- The airway pressure vertical-axis minimum is assumed to be fixed at -5 (the maximum is read). Maximum values other than 30 are unverified\n- With PEEP 0 (no airway pressure fill), the pen tip cannot be detected\n\n## Author\n- VentOCR Developer Team\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VT": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "VT_displayed": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "excluded_alerts": [
+              "Fragment",
+              "Abnormal",
+              "Partial",
+              "Merged?"
+            ]
+          }
         }
       ]
     }
   ],
-  "updated": "2026-10-25"
+  "updated": "2026-10-26"
 }
