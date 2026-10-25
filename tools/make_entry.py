@@ -55,6 +55,9 @@ def blank_validation(manifest: dict, waves: list[str]) -> dict:
         "values": {col: {"unit": (spec or {}).get("unit"), "metric": None, "result": None, "n": None, "comment": ""}
                    for col, spec in (manifest.get("accuracy") or {}).items()},
         "waveforms": {ch: {"metric": None, "result": None, "n": None, "comment": ""} for ch in waves},
+        # 評価で除外する Alert（manifest の outputs.alerts の exclude_from_accuracy から。評価をしたら、実際に除外したものに直す）
+        "excluded_alerts": [a["name"] for a in ((manifest.get("outputs") or {}).get("alerts") or [])
+                            if isinstance(a, dict) and a.get("name") and a.get("exclude_from_accuracy")],
     }
 
 

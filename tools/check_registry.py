@@ -75,6 +75,11 @@ def check_version(name: str, r: dict) -> list[str]:
         problems.append(f"{where}: commit は 40 桁のコミット")
     v = r.get("validation") or {}
     problems += [f"{where}: validation.{k} がありません" for k in VALIDATION if k not in v]
+    if "excluded_alerts" in v and not (isinstance(v["excluded_alerts"], list) and all(isinstance(x, str) for x in v["excluded_alerts"])):
+        problems.append(f"{where}: validation.excluded_alerts は Alert の値（文字）のリスト")
+    for alert in ((manifest.get("outputs") or {}).get("alerts") or []):
+        if not (isinstance(alert, dict) and isinstance(alert.get("name"), str) and alert["name"]):
+            problems.append(f"{where}: outputs.alerts の各項目に name（文字）が要る")
     for group in ("values", "waveforms"):
         for col, res in (v.get(group) or {}).items():
             problems += [f"{where}: validation.{group}.{col}.{k} がありません" for k in RESULT if k not in res]

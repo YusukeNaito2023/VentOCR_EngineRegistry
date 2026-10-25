@@ -66,6 +66,7 @@ VentOCR のデスクトップアプリの「解析 > エンジン…」からイ
 | `comment` | 自由記載（評価の方法・対象・条件、苦手な画面など） |
 | `values` | 値ごと（manifest.json の `accuracy` の列）: `{"unit", "metric", "result", "n", "comment"}` |
 | `waveforms` | 波形ごと: `{"metric", "result", "n", "comment"}` |
+| `excluded_alerts` | その評価で除外した Alert の値（例 `["Abnormal", "Popup", "Clipped"]`）。make_entry は、エンジンの manifest の `outputs.alerts` で `exclude_from_accuracy` が true のものから初期値を作る |
 
 - `metric` は評価の方法（例: 値は「完全一致率 (%)」「MAE」「Bias ± LoA（Bland-Altman）」、波形は「Pearson r」「RMSE」「DTW 距離」）、
   `result` はその結果（数値か、`"98.2%"`・`"0.3 ± 1.1"` のような文字）、`n` は評価に使った呼吸の数（全体と違うとき）
