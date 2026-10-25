@@ -265,6 +265,140 @@
               }
             }
           }
+        },
+        {
+          "version": "0.1.2",
+          "tag": "v0.1.2",
+          "commit": "3cb8c8d98c6295b3859a6a319026d2387c107283",
+          "core_version": "0.1.2",
+          "manifest": {
+            "engine_key": "bennett980_ventocr",
+            "engine_api": 3,
+            "display_name": "PB980",
+            "developer": "VentOCR Developer Team",
+            "version": "0.1.2",
+            "ventocr_min": "0.6.3",
+            "description": "Puritan Bennett 980 ventilator OCR engine (Pressure / Flow / Volume waveforms, VTE)",
+            "sample_video": "sample.mp4",
+            "supported_resolutions": [
+              "3840x2160",
+              "1920x1080",
+              "1280x720"
+            ],
+            "has_extract_waves": true,
+            "frame_check": false,
+            "frame_check_columns": [
+              "BM_Best"
+            ],
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VTE",
+                "Ppeak",
+                "BreathMark",
+                "BreathMark_char",
+                "BM_Best",
+                "Sweep_X",
+                "BM_Best_conf"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "Mode",
+                "VTE",
+                "VTE_raw",
+                "Ppeak",
+                "BreathMark_char",
+                "Fragmented",
+                "Alert"
+              ]
+            },
+            "breath_summary": [
+              "Mode",
+              "VTE",
+              "VTE_raw",
+              "Ppeak"
+            ],
+            "labels": {
+              "VTE_raw": "VTE (displayed)"
+            },
+            "accuracy": {
+              "VTE": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              }
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "skip_keys": [],
+              "sampling_size": 10,
+              "use_gpu": true
+            },
+            "post_ocr": {
+              "fps": 10,
+              "trim_to_breath": true,
+              "smoothing": false,
+              "imputation": false
+            }
+          },
+          "readme": "# Bennett 980 VentOCR Engine\n\nAnalyzes Paw (Airway Pressure), Flow, and Volume from Bennett 980 ventilator display.\n\n## Setup\n\n1. Capture a screenshot of the Bennett 980 display\n2. Place it as `sample_frame.jpg` in this directory\n3. Open the image and measure pixel coordinates for each ROI\n4. Update `Settings.py` with the correct coordinates\n\n## ROI Configuration (Settings.py)\n\n```python\nROIs = {\n    \"Paw\":    [x, y, width, height],\n    \"Flow\":   [x, y, width, height],\n    \"Volume\": [x, y, width, height],\n}\n```\n\nCoordinates are measured from the top-left corner of the display image.\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VTE": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            }
+          }
         }
       ]
     },
@@ -965,6 +1099,1530 @@
             }
           },
           "readme": "# Hamilton VentOCR Engine\n\n## Supported Devices\n- Hamilton の人工呼吸器（左に数値、中央に 気道内圧 / フロー / ボリューム / Pes または Ptranspulm の4波形が並ぶ画面）\n- 1920x1080 で収録した動画（ほかの解像度は 1920x1080 に縮小・拡大してから読む）\n\n## Description\n- **1呼吸** = 左側の数値（コンプライアンス・呼気VT）の表示が更新されてから、次に更新されるまで。\n  - 表示の更新は吸気の始まりより約0.16秒遅れるので、区切りは更新の `boundary_shift_sec`（既定 -0.5秒）前に置く（呼気の終わりで切れる）\n  - 波形の区切りは吸気の始まりへ合わせる（`trim_to_breath`）。自発の呼吸は患者トリガーの三角の 0.08秒前（0.8.1）、\n    強制の呼吸は流量の立ち上がりの足元の 0.04秒前。三角は Hamilton が呼吸を始めた位置そのもので、Volume が 0 に戻る位置と一致する\n  - コンプライアンスが前の呼吸と同じ値のときも区切れるよう、既定では VTE の更新も区切りに使う（`breath_trigger`）\n  - 更新 = VTE かコンプライアンスの新しい値が `stable_frames`（既定 2）フレーム以上続いたこと（0.7.0）。区切りはその値が出た最初のフレーム。\n    空欄（「---」・読めない）も1つの値。1フレームだけの値は無視する。2つの値の変化が1フレーム差なら1回の更新。\n    時間で間引かない（0.6 までの min_breath_sec = 1秒 は廃止。1秒未満の短い呼吸もそのまま1呼吸）\n  - 前後の呼吸の VTE・コンプライアンスがたまたま同じ値だと表示が変わらないので、患者トリガーの三角（下記）の前 0.5秒〜後 1秒に\n    表示の更新が無ければ、三角の 0.3秒後に更新があったものとして区切る（0.8.0。Alert に TriggerSplit）。\n    Abnormal の近く（前 3秒〜後 1秒）と録画の終わりは除く。強制の呼吸（三角が出ない）どうしが同じ値のときは区切れない\n- **OCR**（解析ダイアログの「OCR する値」で選ぶ。既定: VTE・Compliance・Ppeak）:\n  - 測定値: 呼気VT（`VTE`）、コンプライアンス（`Compliance`）、ピーク圧（`Ppeak`）、分時換気量（`MinVol`）、P0.1（`P01`）。\n    画面の数値は「直前の呼吸」の測定値なので、Breaths.csv の値は次の呼吸の間に表示される値、`*_displayed` はその呼吸の間に表示されていた値\n  - 設定値: 換気モード（`Mode`、文字）、呼吸回数（`Set_Rate`）、Δ吸気圧（`Set_Pinsp`）、PEEP/CPAP（`Set_PEEP`）、酸素濃度（`Set_Oxygen`）。\n    その呼吸の間に表示されていた値\n  - 選ばなかった値の列は出力しない\n- **波形**: Pressure（気道内圧 Paw）、Flow、Volume と、4 段目の圧。BreathCSVs/<n>.csv の列は X, Pressure, Flow, Volume, Pes（または Ptranspulm）\n  - 4 段目は Hamilton の設定で Pes（食道内圧）か Ptranspulm（経肺圧 = Paw − Pes）を表示できる。どちらかは解析の設定\n    `post_ocr.ptranspulm`（既定オフ = Pes）で選ぶ（0.2.0）。オンなら列の名前が Ptranspulm になり、Breaths.csv・Frames.csv の\n    Axis_Ptranspulm・Ptranspulm_min / Ptranspulm_max、fields.txt・scale_meta.json の名前も変わる（値は同じ）。\n    パネルの名前は読まないので、動画ごとに正しく選ぶこと。記録の途中で切り替えた動画には対応しない\n  - 掃引は 50 px/秒で左から右へ描き、x=1567 に達すると x=467 に戻って上書きする（1周 22秒、wrap around）\n  - 各フレームで前のフレームから変化した列の右端（= ペン先 + 消去帯 3px）を記録し、毎フレームのペン先を追跡する（0.6.0。core.track_sweep）\n  - 画面操作などで描画が止まり、画面全体が消去されて途中から左端に戻ることがある。その前の部分は消去の直前のフレームから読む。\n    描画が止まっていた間は空欄（3割以上が空欄の呼吸は Alert に Partial）\n  - 縦軸の範囲を超えた波形は描画領域の端で切れる。その後 Hamilton が縦軸を広げたら、列がまだ画面に残っているうちに読み直す\n    （Breaths.csv の Wave_Reread に読み直した波形。読み直せなければ Alert に Clipped。ボリュームの下端（0 を下回る部分）は判定しない）\n  - 呼吸の波形は、その呼吸の最後のフレームから「開始時のペン先の次の列〜終了時のペン先の列」を切り出す（折り返しをまたぐ呼吸はつなぐ）\n  - 各点の時刻 = `Wave_T0` + 行番号 / `Wave_Rate`（Breaths.csv）\n- **トリガー**（0.8.0）: Breaths.csv の `Trigger` = `A`（患者の自発のトリガー）/ `C`（強制。器械のトリガー）。呼吸プロパティのサマリーにも出す\n  - Hamilton が自発トリガーと判定した呼吸の始まりに、気道内圧の時間軸のすぐ下にピンクの三角（▲）が描かれる。\n    その呼吸の間に新しい三角が描かれたら A、無ければ C。ポップアップの間も気道内圧の欄が見えていれば（縦軸の目盛りを読めれば）三角を使う。\n    気道内圧の欄が見えないフレームを含み、三角が無い呼吸は空欄（隠れていたかもしれない）\n  - initial_ocr で各フレームの三角の頂点を記録し（Frames.csv の `Trigger_Apexes`）、post_ocr でペン先のすぐ後ろ（0〜40px）に\n    新しく出たものを選ぶ（`Trigger_New`）。画面には1周前の三角もペン先より右に残っているので、位置で区別する。\n    1周前の三角とほぼ同じ位置に描き直されたものは、ペン先が通り過ぎた後も残っていることで区別する\n  - 時間軸は気道内圧の 0 の位置で、縦軸のスケールにより上下に動くので、気道内圧の欄（y=100〜315）の中から色と大きさで探す。\n    時間軸の目盛りの数字（5・10・15・20）と重なった三角は、色がにじんで小片に分かれるので、つないでから判定する\n\n## 縦軸のスケール（0.5.0）\n- Hamilton は波形ごとに縦軸のスケールを頻繁に自動で変える（Ptranspulm 2026-10-09 の1時間で15通り。\n  Paw 0〜20 / 0〜40、Flow ±45 / ±75 / ±150、Volume 400 / 800 / 1600、Pes 0〜20 / -10〜20 / -20〜20 / -20〜40 / -40〜40 など。0 の位置も動く）\n- 各フレームで縦軸の目盛りの数字（x=414〜462）を読み、波形ごとに「数字の y → 値」を直線で当てはめる（axis_scale.py）。\n  数字は 0〜9 と「-」だけで毎回同じ形なので、汎用の OCR ではなく1文字ずつ見本と照合する\n- 呼吸の波形は、切り出した最後のフレームの換算式で物理量にする。Breaths.csv の Axis_<波形> = \"a;b;最小の目盛り;最大の目盛り\"（値 = a*y + b）、\n  P_min / P_max などは描画領域（画面の縦の軸線）の下端・上端の値（0.8.1。0.8.0 までは目盛りの最小・最大の数字で、\n  一番下の目盛りより下に出た波形がチャートの外に出ていた）\n\n## Expected Layout\nSee `layout.jpg`（赤枠: OCR（Settings.OCR_FIELDS）、白枠: 波形、青枠: 画面確認用の縦軸目盛り）。\n\n## フレームレートとフレームの画像\n- 解析のフレームレートは 10 fps 以外でもよい（engine_api 2。5・10・30 fps で確認）。秒とフレーム数の換算は `post_ocr.fps` を使う。\n  設定の `stable_frames` は 10 fps のときのフレーム数で、ほかの fps では同じ時間に換算する\n- フレームの画像は、波形の抽出で必要なものだけを `cv2.imread` で読む（engine_api 3。2 分の動画で 40 枚程度）\n\n## Limitations\n- P0.1 は、サンプル動画で「---」（測定なし）だったため、数値の読み取りは未確認（負の値も読む設定）\n- 波形の縦軸の目盛りは、文字の見本（axis_glyphs.npz）と照合して読む。見本に「9」が無い（作成に使った動画に出てこなかった）ので、\n  「9」を含む目盛り（90 など）は読めず、その波形は直前に読めた目盛りで換算する（Alert に Axis?）\n- 縦軸の目盛りが読めた波形が3つ未満のフレーム（ポップアップ・別の画面）は Abnormal（Alert に Abnormal）。\n  ポップアップの間も Hamilton は裏で波形を描き続けるので、Abnormal を含む呼吸も波形を読む（0.8.0）。\n  列を読む画像がポップアップの最中なら、ポップアップが消えた直後のフレームから4つの波形を読む（Breaths.csv の Wave_Popup に Reread）。\n  ポップアップが長く（1周 22秒以上）その列が上書きされていたら、ポップアップの間も見えている気道内圧の欄から Paw だけを読む（PawOnly）。\n  途中で画面が消去された場合や、気道内圧の欄も見えない場合は空欄\n- 横軸（掃引の幅 22秒）を変えた画面には未対応\n- 1周（22秒）より長い呼吸は最後の1周分だけ（Alert に Long）\n- 録画の最初と最後の呼吸は途中で切れている（Alert に Fragment）\n- 三角を見つけられず、自発でも C になる呼吸がある（Ptranspulm 2026-10-09 で自発 1103 呼吸のうち 5 呼吸。原因は未調査）\n\n## Author\n- VentOCR Developer Team\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume",
+            "Pes",
+            "Ptranspulm"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VTE": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Compliance": {
+                "unit": "mL/cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ppeak": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "MinVol": {
+                "unit": "L/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "P01": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Mode": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Rate": {
+                "unit": "b/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Pinsp": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_PEEP": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Oxygen": {
+                "unit": "%",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "VTE_displayed": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Compliance_displayed": {
+                "unit": "mL/cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ppeak_displayed": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "MinVol_displayed": {
+                "unit": "L/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "P01_displayed": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Trigger": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Pes": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ptranspulm": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            }
+          }
+        },
+        {
+          "version": "0.2.1",
+          "tag": "v0.2.1",
+          "commit": "116d8d3afa9095fdc5d25a1b610ec2333dd4831f",
+          "core_version": "0.2.1",
+          "manifest": {
+            "engine_key": "hamilton_ventocr",
+            "display_name": "Hamilton",
+            "developer": "VentOCR Developer Team",
+            "version": "0.2.1",
+            "engine_api": 3,
+            "ventocr_min": "0.6.2",
+            "description": "Hamilton ventilator OCR engine. Breath = display update of Compliance / VTE. OCR (selectable): VTE, Compliance, Ppeak, MinVol, P0.1, mode, set rate / ΔPinsp / PEEP / oxygen. Waveforms: Paw (Pressure), Flow, Volume, and the 4th panel as Pes or Ptranspulm (option post_ocr.ptranspulm) with wrap-around sweep (50 px/s, 22 s per sweep on 1920x1080). Trigger: A (patient-triggered, pink triangle under the Paw time axis) / C (machine-triggered); a new triangle without a display update also starts a breath.",
+            "base_resolution": "1920x1080",
+            "supported_resolutions": [
+              "1920x1080"
+            ],
+            "has_extract_waves": true,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VTE",
+                "Compliance",
+                "Ppeak",
+                "MinVol",
+                "P01",
+                "Mode",
+                "Set_Rate",
+                "Set_Pinsp",
+                "Set_PEEP",
+                "Set_Oxygen",
+                "Sweep_X",
+                "BreathMark",
+                "Trigger_New"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "VTE",
+                "Compliance",
+                "Ppeak",
+                "MinVol",
+                "P01",
+                "Mode",
+                "Set_Rate",
+                "Set_Pinsp",
+                "Set_PEEP",
+                "Set_Oxygen",
+                "Trigger",
+                "Duration"
+              ]
+            },
+            "breath_summary": [
+              "Trigger",
+              "VTE",
+              "Compliance",
+              "Ppeak",
+              "MinVol",
+              "P01",
+              "Mode",
+              "Set_Rate",
+              "Set_Pinsp",
+              "Set_PEEP",
+              "Set_Oxygen",
+              "VTE_displayed",
+              "Compliance_displayed",
+              "Ppeak_displayed",
+              "MinVol_displayed",
+              "P01_displayed"
+            ],
+            "labels": {
+              "Trigger": "トリガー（A: 自発 / C: 強制）",
+              "Ppeak": "Ppeak（ピーク圧）",
+              "MinVol": "MinVol（分時換気量）",
+              "P01": "P0.1",
+              "Mode": "換気モード",
+              "Set_Rate": "呼吸回数（設定）",
+              "Set_Pinsp": "Δ吸気圧（設定）",
+              "Set_PEEP": "PEEP（設定）",
+              "Set_Oxygen": "酸素濃度（設定）",
+              "VTE_displayed": "VTE (displayed)",
+              "Compliance_displayed": "Compliance (displayed)",
+              "Ppeak_displayed": "Ppeak (displayed)",
+              "MinVol_displayed": "MinVol (displayed)",
+              "P01_displayed": "P0.1 (displayed)"
+            },
+            "accuracy": {
+              "VTE": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "Compliance": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL/cmH2O"
+              },
+              "Ppeak": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "MinVol": {
+                "method": null,
+                "threshold": null,
+                "unit": "L/min"
+              },
+              "P01": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Mode": {
+                "method": null,
+                "threshold": null
+              },
+              "Set_Rate": {
+                "method": null,
+                "threshold": null,
+                "unit": "b/min"
+              },
+              "Set_Pinsp": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Set_PEEP": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Set_Oxygen": {
+                "method": null,
+                "threshold": null,
+                "unit": "%"
+              },
+              "VTE_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "Compliance_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL/cmH2O"
+              },
+              "Ppeak_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "MinVol_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "L/min"
+              },
+              "P01_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              },
+              "Trigger": {
+                "method": null,
+                "threshold": null
+              }
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Pressure",
+                  "label": "Paw",
+                  "unit": "cmH2O",
+                  "color": "#d62728",
+                  "scale": {
+                    "min": "P_min",
+                    "max": "P_max"
+                  }
+                },
+                {
+                  "name": "Flow",
+                  "unit": "L/min",
+                  "color": "#1f77b4",
+                  "scale": {
+                    "min": "F_min",
+                    "max": "F_max"
+                  }
+                },
+                {
+                  "name": "Volume",
+                  "unit": "mL",
+                  "color": "#2ca02c",
+                  "scale": {
+                    "min": "V_min",
+                    "max": "V_max"
+                  }
+                },
+                {
+                  "name": "Pes",
+                  "label": "Pes",
+                  "unit": "cmH2O",
+                  "color": "#8c564b",
+                  "scale": {
+                    "min": "Pes_min",
+                    "max": "Pes_max"
+                  }
+                },
+                {
+                  "name": "Ptranspulm",
+                  "label": "Ptranspulm",
+                  "unit": "cmH2O",
+                  "color": "#8c564b",
+                  "scale": {
+                    "min": "Ptranspulm_min",
+                    "max": "Ptranspulm_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "Trigger",
+                  "label": "トリガー（A: 自発 / C: 強制）"
+                },
+                {
+                  "name": "VTE",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Compliance",
+                  "unit": "mL/cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Ppeak",
+                  "label": "Ppeak（ピーク圧）",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "MinVol",
+                  "label": "MinVol（分時換気量）",
+                  "unit": "L/min",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "P01",
+                  "label": "P0.1",
+                  "unit": "cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Mode",
+                  "label": "換気モード"
+                },
+                {
+                  "name": "Set_Rate",
+                  "label": "呼吸回数（設定）",
+                  "unit": "b/min",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_Pinsp",
+                  "label": "Δ吸気圧（設定）",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_PEEP",
+                  "label": "PEEP（設定）",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_Oxygen",
+                  "label": "酸素濃度（設定）",
+                  "unit": "%",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "VTE_displayed",
+                  "label": "VTE (displayed)",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Compliance_displayed",
+                  "label": "Compliance (displayed)",
+                  "unit": "mL/cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Ppeak_displayed",
+                  "label": "Ppeak (displayed)",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "MinVol_displayed",
+                  "label": "MinVol (displayed)",
+                  "unit": "L/min",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "P01_displayed",
+                  "label": "P0.1 (displayed)",
+                  "unit": "cmH2O",
+                  "format": "{:.1f}"
+                }
+              ]
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "ocr_keys": [
+                "VTE",
+                "Compliance",
+                "Ppeak"
+              ],
+              "use_gpu": true,
+              "diff_thresh": 3.0
+            },
+            "post_ocr": {
+              "breath_trigger": [
+                "Compliance",
+                "VTE"
+              ],
+              "boundary_shift_sec": -0.5,
+              "stable_frames": 2,
+              "trim_to_breath": true,
+              "ptranspulm": false
+            }
+          },
+          "readme": "# Hamilton VentOCR Engine\n\n## Supported Devices\n- Hamilton の人工呼吸器（左に数値、中央に 気道内圧 / フロー / ボリューム / Pes または Ptranspulm の4波形が並ぶ画面）\n- 1920x1080 で収録した動画（ほかの解像度は 1920x1080 に縮小・拡大してから読む）\n\n## Description\n- **1呼吸** = 左側の数値（コンプライアンス・呼気VT）の表示が更新されてから、次に更新されるまで。\n  - 表示の更新は吸気の始まりより約0.16秒遅れるので、区切りは更新の `boundary_shift_sec`（既定 -0.5秒）前に置く（呼気の終わりで切れる）\n  - 波形の区切りは吸気の始まりへ合わせる（`trim_to_breath`）。自発の呼吸は患者トリガーの三角の 0.08秒前（0.8.1）、\n    強制の呼吸は流量の立ち上がりの足元の 0.04秒前。三角は Hamilton が呼吸を始めた位置そのもので、Volume が 0 に戻る位置と一致する\n  - コンプライアンスが前の呼吸と同じ値のときも区切れるよう、既定では VTE の更新も区切りに使う（`breath_trigger`）\n  - 更新 = VTE かコンプライアンスの新しい値が `stable_frames`（既定 2）フレーム以上続いたこと（0.7.0）。区切りはその値が出た最初のフレーム。\n    空欄（「---」・読めない）も1つの値。1フレームだけの値は無視する。2つの値の変化が1フレーム差なら1回の更新。\n    時間で間引かない（0.6 までの min_breath_sec = 1秒 は廃止。1秒未満の短い呼吸もそのまま1呼吸）\n  - 前後の呼吸の VTE・コンプライアンスがたまたま同じ値だと表示が変わらないので、患者トリガーの三角（下記）の前 0.5秒〜後 1秒に\n    表示の更新が無ければ、三角の 0.3秒後に更新があったものとして区切る（0.8.0。Alert に TriggerSplit）。\n    Abnormal の近く（前 3秒〜後 1秒）と録画の終わりは除く。強制の呼吸（三角が出ない）どうしが同じ値のときは区切れない\n- **OCR**（解析ダイアログの「OCR する値」で選ぶ。既定: VTE・Compliance・Ppeak）:\n  - 測定値: 呼気VT（`VTE`）、コンプライアンス（`Compliance`）、ピーク圧（`Ppeak`）、分時換気量（`MinVol`）、P0.1（`P01`）。\n    画面の数値は「直前の呼吸」の測定値なので、Breaths.csv の値は次の呼吸の間に表示される値、`*_displayed` はその呼吸の間に表示されていた値\n  - 設定値: 換気モード（`Mode`、文字）、呼吸回数（`Set_Rate`）、Δ吸気圧（`Set_Pinsp`）、PEEP/CPAP（`Set_PEEP`）、酸素濃度（`Set_Oxygen`）。\n    その呼吸の間に表示されていた値\n  - 選ばなかった値の列は出力しない\n- **波形**: Pressure（気道内圧 Paw）、Flow、Volume と、4 段目の圧。BreathCSVs/<n>.csv の列は X, Pressure, Flow, Volume, Pes（または Ptranspulm）\n  - 4 段目は Hamilton の設定で Pes（食道内圧）か Ptranspulm（経肺圧 = Paw − Pes）を表示できる。どちらかは解析の設定\n    `post_ocr.ptranspulm`（既定オフ = Pes）で選ぶ（0.2.0）。オンなら列の名前が Ptranspulm になり、Breaths.csv・Frames.csv の\n    Axis_Ptranspulm・Ptranspulm_min / Ptranspulm_max、fields.txt・scale_meta.json の名前も変わる（値は同じ）。\n    パネルの名前は読まないので、動画ごとに正しく選ぶこと。記録の途中で切り替えた動画には対応しない\n  - 掃引は 50 px/秒で左から右へ描き、x=1567 に達すると x=467 に戻って上書きする（1周 22秒、wrap around）\n  - 各フレームで前のフレームから変化した列の右端（= ペン先 + 消去帯 3px）を記録し、毎フレームのペン先を追跡する（0.6.0。core.track_sweep）\n  - 画面操作などで描画が止まり、画面全体が消去されて途中から左端に戻ることがある。その前の部分は消去の直前のフレームから読む。\n    描画が止まっていた間は空欄（3割以上が空欄の呼吸は Alert に Partial）\n  - 縦軸の範囲を超えた波形は描画領域の端で切れる。その後 Hamilton が縦軸を広げたら、列がまだ画面に残っているうちに読み直す\n    （Breaths.csv の Wave_Reread に読み直した波形。読み直せなければ Alert に Clipped。ボリュームの下端（0 を下回る部分）は判定しない）\n  - 呼吸の波形は、その呼吸の最後のフレームから「開始時のペン先の次の列〜終了時のペン先の列」を切り出す（折り返しをまたぐ呼吸はつなぐ）\n  - 各点の時刻 = `Wave_T0` + 行番号 / `Wave_Rate`（Breaths.csv）\n- **トリガー**（0.8.0）: Breaths.csv の `Trigger` = `A`（患者の自発のトリガー）/ `C`（強制。器械のトリガー）。呼吸プロパティのサマリーにも出す\n  - Hamilton が自発トリガーと判定した呼吸の始まりに、気道内圧の時間軸のすぐ下にピンクの三角（▲）が描かれる。\n    その呼吸の間に新しい三角が描かれたら A、無ければ C。ポップアップの間も気道内圧の欄が見えていれば（縦軸の目盛りを読めれば）三角を使う。\n    気道内圧の欄が見えないフレームを含み、三角が無い呼吸は空欄（隠れていたかもしれない）\n  - initial_ocr で各フレームの三角の頂点を記録し（Frames.csv の `Trigger_Apexes`）、post_ocr でペン先のすぐ後ろ（0〜40px）に\n    新しく出たものを選ぶ（`Trigger_New`）。画面には1周前の三角もペン先より右に残っているので、位置で区別する。\n    1周前の三角とほぼ同じ位置に描き直されたものは、ペン先が通り過ぎた後も残っていることで区別する\n  - 時間軸は気道内圧の 0 の位置で、縦軸のスケールにより上下に動くので、気道内圧の欄（y=100〜315）の中から色と大きさで探す。\n    時間軸の目盛りの数字（5・10・15・20）と重なった三角は、色がにじんで小片に分かれるので、つないでから判定する\n\n## 縦軸のスケール（0.5.0）\n- Hamilton は波形ごとに縦軸のスケールを頻繁に自動で変える（Ptranspulm 2026-10-09 の1時間で15通り。\n  Paw 0〜20 / 0〜40、Flow ±45 / ±75 / ±150、Volume 400 / 800 / 1600、Pes 0〜20 / -10〜20 / -20〜20 / -20〜40 / -40〜40 など。0 の位置も動く）\n- 各フレームで縦軸の目盛りの数字（x=414〜462）を読み、波形ごとに「数字の y → 値」を直線で当てはめる（axis_scale.py）。\n  数字は 0〜9 と「-」だけで毎回同じ形なので、汎用の OCR ではなく1文字ずつ見本と照合する\n- 呼吸の波形は、切り出した最後のフレームの換算式で物理量にする。Breaths.csv の Axis_<波形> = \"a;b;最小の目盛り;最大の目盛り\"（値 = a*y + b）、\n  P_min / P_max などは描画領域（画面の縦の軸線）の下端・上端の値（0.8.1。0.8.0 までは目盛りの最小・最大の数字で、\n  一番下の目盛りより下に出た波形がチャートの外に出ていた）\n\n## Expected Layout\nSee `layout.jpg`（赤枠: OCR（Settings.OCR_FIELDS）、白枠: 波形、青枠: 画面確認用の縦軸目盛り）。\n\n## フレームレートとフレームの画像\n- 解析のフレームレートは 10 fps 以外でもよい（engine_api 2。5・10・30 fps で確認）。秒とフレーム数の換算は `post_ocr.fps` を使う。\n  設定の `stable_frames` は 10 fps のときのフレーム数で、ほかの fps では同じ時間に換算する\n- フレームの画像は、波形の抽出で必要なものだけを `cv2.imread` で読む（engine_api 3。2 分の動画で 40 枚程度）\n\n## Limitations\n- P0.1 は、サンプル動画で「---」（測定なし）だったため、数値の読み取りは未確認（負の値も読む設定）\n- 波形の縦軸の目盛りは、文字の見本（axis_glyphs.npz）と照合して読む。見本に「9」が無い（作成に使った動画に出てこなかった）ので、\n  「9」を含む目盛り（90 など）は読めず、その波形は直前に読めた目盛りで換算する（Alert に Axis?）\n- 縦軸の目盛りが読めた波形が3つ未満のフレーム（ポップアップ・別の画面）は Abnormal（Alert に Abnormal）。\n  ポップアップの間も Hamilton は裏で波形を描き続けるので、Abnormal を含む呼吸も波形を読む（0.8.0）。\n  列を読む画像がポップアップの最中なら、ポップアップが消えた直後のフレームから4つの波形を読む（Breaths.csv の Wave_Popup に Reread）。\n  ポップアップが長く（1周 22秒以上）その列が上書きされていたら、ポップアップの間も見えている気道内圧の欄から Paw だけを読む（PawOnly）。\n  途中で画面が消去された場合や、気道内圧の欄も見えない場合は空欄\n- 横軸（掃引の幅 22秒）を変えた画面には未対応\n- 1周（22秒）より長い呼吸は最後の1周分だけ（Alert に Long）\n- 録画の最初と最後の呼吸は途中で切れている（Alert に Fragment）\n- 三角を見つけられず、自発でも C になる呼吸がある（Ptranspulm 2026-10-09 で自発 1103 呼吸のうち 5 呼吸。原因は未調査）\n\n## Author\n- VentOCR Developer Team\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume",
+            "Pes",
+            "Ptranspulm"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VTE": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Compliance": {
+                "unit": "mL/cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ppeak": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "MinVol": {
+                "unit": "L/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "P01": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Mode": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Rate": {
+                "unit": "b/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Pinsp": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_PEEP": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Oxygen": {
+                "unit": "%",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "VTE_displayed": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Compliance_displayed": {
+                "unit": "mL/cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ppeak_displayed": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "MinVol_displayed": {
+                "unit": "L/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "P01_displayed": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Trigger": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Pes": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ptranspulm": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            }
+          }
+        },
+        {
+          "version": "0.2.2",
+          "tag": "v0.2.2",
+          "commit": "4e7da06f9135553596ef6e3560136a113498a7e0",
+          "core_version": "0.2.2",
+          "manifest": {
+            "engine_key": "hamilton_ventocr",
+            "display_name": "Hamilton",
+            "developer": "VentOCR Developer Team",
+            "version": "0.2.2",
+            "engine_api": 3,
+            "ventocr_min": "0.6.2",
+            "description": "Hamilton ventilator OCR engine. Breath = display update of Compliance / VTE. OCR (selectable): VTE, Compliance, Ppeak, MinVol, P0.1, mode, set rate / ΔPinsp / PEEP / oxygen. Waveforms: Paw (Pressure), Flow, Volume, and the 4th panel as Pes or Ptranspulm (option post_ocr.ptranspulm) with wrap-around sweep (50 px/s, 22 s per sweep on 1920x1080). Trigger: A (patient-triggered, pink triangle under the Paw time axis) / C (machine-triggered); a new triangle without a display update also starts a breath.",
+            "base_resolution": "1920x1080",
+            "supported_resolutions": [
+              "1920x1080"
+            ],
+            "has_extract_waves": true,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VTE",
+                "Compliance",
+                "Ppeak",
+                "MinVol",
+                "P01",
+                "Mode",
+                "Set_Rate",
+                "Set_Pinsp",
+                "Set_PEEP",
+                "Set_Oxygen",
+                "Sweep_X",
+                "BreathMark",
+                "Trigger_New"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "VTE",
+                "Compliance",
+                "Ppeak",
+                "MinVol",
+                "P01",
+                "Mode",
+                "Set_Rate",
+                "Set_Pinsp",
+                "Set_PEEP",
+                "Set_Oxygen",
+                "Trigger",
+                "Duration"
+              ]
+            },
+            "breath_summary": [
+              "Trigger",
+              "VTE",
+              "Compliance",
+              "Ppeak",
+              "MinVol",
+              "P01",
+              "Mode",
+              "Set_Rate",
+              "Set_Pinsp",
+              "Set_PEEP",
+              "Set_Oxygen",
+              "VTE_displayed",
+              "Compliance_displayed",
+              "Ppeak_displayed",
+              "MinVol_displayed",
+              "P01_displayed"
+            ],
+            "labels": {
+              "Trigger": "トリガー（A: 自発 / C: 強制）",
+              "Ppeak": "Ppeak（ピーク圧）",
+              "MinVol": "MinVol（分時換気量）",
+              "P01": "P0.1",
+              "Mode": "換気モード",
+              "Set_Rate": "呼吸回数（設定）",
+              "Set_Pinsp": "Δ吸気圧（設定）",
+              "Set_PEEP": "PEEP（設定）",
+              "Set_Oxygen": "酸素濃度（設定）",
+              "VTE_displayed": "VTE (displayed)",
+              "Compliance_displayed": "Compliance (displayed)",
+              "Ppeak_displayed": "Ppeak (displayed)",
+              "MinVol_displayed": "MinVol (displayed)",
+              "P01_displayed": "P0.1 (displayed)"
+            },
+            "accuracy": {
+              "VTE": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "Compliance": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL/cmH2O"
+              },
+              "Ppeak": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "MinVol": {
+                "method": null,
+                "threshold": null,
+                "unit": "L/min"
+              },
+              "P01": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Mode": {
+                "method": null,
+                "threshold": null
+              },
+              "Set_Rate": {
+                "method": null,
+                "threshold": null,
+                "unit": "b/min"
+              },
+              "Set_Pinsp": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Set_PEEP": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Set_Oxygen": {
+                "method": null,
+                "threshold": null,
+                "unit": "%"
+              },
+              "VTE_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "Compliance_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL/cmH2O"
+              },
+              "Ppeak_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "MinVol_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "L/min"
+              },
+              "P01_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              },
+              "Trigger": {
+                "method": null,
+                "threshold": null
+              }
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Pressure",
+                  "label": "Paw",
+                  "unit": "cmH2O",
+                  "color": "#d62728",
+                  "scale": {
+                    "min": "P_min",
+                    "max": "P_max"
+                  }
+                },
+                {
+                  "name": "Flow",
+                  "unit": "L/min",
+                  "color": "#1f77b4",
+                  "scale": {
+                    "min": "F_min",
+                    "max": "F_max"
+                  }
+                },
+                {
+                  "name": "Volume",
+                  "unit": "mL",
+                  "color": "#2ca02c",
+                  "scale": {
+                    "min": "V_min",
+                    "max": "V_max"
+                  }
+                },
+                {
+                  "name": "Pes",
+                  "label": "Pes",
+                  "unit": "cmH2O",
+                  "color": "#8c564b",
+                  "scale": {
+                    "min": "Pes_min",
+                    "max": "Pes_max"
+                  }
+                },
+                {
+                  "name": "Ptranspulm",
+                  "label": "Ptranspulm",
+                  "unit": "cmH2O",
+                  "color": "#8c564b",
+                  "scale": {
+                    "min": "Ptranspulm_min",
+                    "max": "Ptranspulm_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "Trigger",
+                  "label": "トリガー（A: 自発 / C: 強制）"
+                },
+                {
+                  "name": "VTE",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Compliance",
+                  "unit": "mL/cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Ppeak",
+                  "label": "Ppeak（ピーク圧）",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "MinVol",
+                  "label": "MinVol（分時換気量）",
+                  "unit": "L/min",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "P01",
+                  "label": "P0.1",
+                  "unit": "cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Mode",
+                  "label": "換気モード"
+                },
+                {
+                  "name": "Set_Rate",
+                  "label": "呼吸回数（設定）",
+                  "unit": "b/min",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_Pinsp",
+                  "label": "Δ吸気圧（設定）",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_PEEP",
+                  "label": "PEEP（設定）",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_Oxygen",
+                  "label": "酸素濃度（設定）",
+                  "unit": "%",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "VTE_displayed",
+                  "label": "VTE (displayed)",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Compliance_displayed",
+                  "label": "Compliance (displayed)",
+                  "unit": "mL/cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Ppeak_displayed",
+                  "label": "Ppeak (displayed)",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "MinVol_displayed",
+                  "label": "MinVol (displayed)",
+                  "unit": "L/min",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "P01_displayed",
+                  "label": "P0.1 (displayed)",
+                  "unit": "cmH2O",
+                  "format": "{:.1f}"
+                }
+              ]
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "ocr_keys": [
+                "VTE",
+                "Compliance",
+                "Ppeak"
+              ],
+              "use_gpu": true,
+              "diff_thresh": 3.0
+            },
+            "post_ocr": {
+              "breath_trigger": [
+                "Compliance",
+                "VTE"
+              ],
+              "boundary_shift_sec": -0.5,
+              "stable_frames": 2,
+              "trim_to_breath": true,
+              "ptranspulm": false
+            }
+          },
+          "readme": "# Hamilton VentOCR Engine\n\n## Supported Devices\n- Hamilton の人工呼吸器（左に数値、中央に 気道内圧 / フロー / ボリューム / Pes または Ptranspulm の4波形が並ぶ画面）\n- 1920x1080 で収録した動画（ほかの解像度は 1920x1080 に縮小・拡大してから読む）\n\n## Description\n- **1呼吸** = 左側の数値（コンプライアンス・呼気VT）の表示が更新されてから、次に更新されるまで。\n  - 表示の更新は吸気の始まりより約0.16秒遅れるので、区切りは更新の `boundary_shift_sec`（既定 -0.5秒）前に置く（呼気の終わりで切れる）\n  - 波形の区切りは吸気の始まりへ合わせる（`trim_to_breath`）。自発の呼吸は患者トリガーの三角の 0.08秒前（0.8.1）、\n    強制の呼吸は流量の立ち上がりの足元の 0.04秒前。三角は Hamilton が呼吸を始めた位置そのもので、Volume が 0 に戻る位置と一致する\n  - コンプライアンスが前の呼吸と同じ値のときも区切れるよう、既定では VTE の更新も区切りに使う（`breath_trigger`）\n  - 更新 = VTE かコンプライアンスの新しい値が `stable_frames`（既定 2）フレーム以上続いたこと（0.7.0）。区切りはその値が出た最初のフレーム。\n    空欄（「---」・読めない）も1つの値。1フレームだけの値は無視する。2つの値の変化が1フレーム差なら1回の更新。\n    時間で間引かない（0.6 までの min_breath_sec = 1秒 は廃止。1秒未満の短い呼吸もそのまま1呼吸）\n  - 前後の呼吸の VTE・コンプライアンスがたまたま同じ値だと表示が変わらないので、患者トリガーの三角（下記）の前 0.5秒〜後 1秒に\n    表示の更新が無ければ、三角の 0.3秒後に更新があったものとして区切る（0.8.0。Alert に TriggerSplit）。\n    Abnormal の近く（前 3秒〜後 1秒）と録画の終わりは除く。強制の呼吸（三角が出ない）どうしが同じ値のときは区切れない\n- **OCR**（解析ダイアログの「OCR する値」で選ぶ。既定: VTE・Compliance・Ppeak）:\n  - 測定値: 呼気VT（`VTE`）、コンプライアンス（`Compliance`）、ピーク圧（`Ppeak`）、分時換気量（`MinVol`）、P0.1（`P01`）。\n    画面の数値は「直前の呼吸」の測定値なので、Breaths.csv の値は次の呼吸の間に表示される値、`*_displayed` はその呼吸の間に表示されていた値\n  - 設定値: 換気モード（`Mode`、文字）、呼吸回数（`Set_Rate`）、Δ吸気圧（`Set_Pinsp`）、PEEP/CPAP（`Set_PEEP`）、酸素濃度（`Set_Oxygen`）。\n    その呼吸の間に表示されていた値\n  - 選ばなかった値の列は出力しない\n- **波形**: Pressure（気道内圧 Paw）、Flow、Volume と、4 段目の圧。BreathCSVs/<n>.csv の列は X, Pressure, Flow, Volume, Pes（または Ptranspulm）\n  - 4 段目は Hamilton の設定で Pes（食道内圧）か Ptranspulm（経肺圧 = Paw − Pes）を表示できる。どちらかは解析の設定\n    `post_ocr.ptranspulm`（既定オフ = Pes）で選ぶ（0.2.0）。オンなら列の名前が Ptranspulm になり、Breaths.csv・Frames.csv の\n    Axis_Ptranspulm・Ptranspulm_min / Ptranspulm_max、fields.txt・scale_meta.json の名前も変わる（値は同じ）。\n    パネルの名前は読まないので、動画ごとに正しく選ぶこと。記録の途中で切り替えた動画には対応しない\n  - 掃引は 50 px/秒で左から右へ描き、x=1567 に達すると x=467 に戻って上書きする（1周 22秒、wrap around）\n  - 各フレームで前のフレームから変化した列の右端（= ペン先 + 消去帯 3px）を記録し、毎フレームのペン先を追跡する（0.6.0。core.track_sweep）\n  - 画面操作などで描画が止まり、画面全体が消去されて途中から左端に戻ることがある。その前の部分は消去の直前のフレームから読む。\n    描画が止まっていた間は空欄（3割以上が空欄の呼吸は Alert に Partial）\n  - 縦軸の範囲を超えた波形は描画領域の端で切れる。その後 Hamilton が縦軸を広げたら、列がまだ画面に残っているうちに読み直す\n    （Breaths.csv の Wave_Reread に読み直した波形。読み直せなければ Alert に Clipped。ボリュームの下端（0 を下回る部分）は判定しない）\n  - 呼吸の波形は、その呼吸の最後のフレームから「開始時のペン先の次の列〜終了時のペン先の列」を切り出す（折り返しをまたぐ呼吸はつなぐ）\n  - 各点の時刻 = `Wave_T0` + 行番号 / `Wave_Rate`（Breaths.csv）\n- **トリガー**（0.8.0）: Breaths.csv の `Trigger` = `A`（患者の自発のトリガー）/ `C`（強制。器械のトリガー）。呼吸プロパティのサマリーにも出す\n  - Hamilton が自発トリガーと判定した呼吸の始まりに、気道内圧の時間軸のすぐ下にピンクの三角（▲）が描かれる。\n    その呼吸の間に新しい三角が描かれたら A、無ければ C。ポップアップの間も気道内圧の欄が見えていれば（縦軸の目盛りを読めれば）三角を使う。\n    気道内圧の欄が見えないフレームを含み、三角が無い呼吸は空欄（隠れていたかもしれない）\n  - initial_ocr で各フレームの三角の頂点を記録し（Frames.csv の `Trigger_Apexes`）、post_ocr でペン先のすぐ後ろ（0〜40px）に\n    新しく出たものを選ぶ（`Trigger_New`）。画面には1周前の三角もペン先より右に残っているので、位置で区別する。\n    1周前の三角とほぼ同じ位置に描き直されたものは、ペン先が通り過ぎた後も残っていることで区別する\n  - 時間軸は気道内圧の 0 の位置で、縦軸のスケールにより上下に動くので、気道内圧の欄（y=100〜315）の中から色と大きさで探す。\n    時間軸の目盛りの数字（5・10・15・20）と重なった三角は、色がにじんで小片に分かれるので、つないでから判定する\n\n## 縦軸のスケール（0.5.0）\n- Hamilton は波形ごとに縦軸のスケールを頻繁に自動で変える（Ptranspulm 2026-10-09 の1時間で15通り。\n  Paw 0〜20 / 0〜40、Flow ±45 / ±75 / ±150、Volume 400 / 800 / 1600、Pes 0〜20 / -10〜20 / -20〜20 / -20〜40 / -40〜40 など。0 の位置も動く）\n- 各フレームで縦軸の目盛りの数字（x=414〜462）を読み、波形ごとに「数字の y → 値」を直線で当てはめる（axis_scale.py）。\n  数字は 0〜9 と「-」だけで毎回同じ形なので、汎用の OCR ではなく1文字ずつ見本と照合する\n- 呼吸の波形は、切り出した最後のフレームの換算式で物理量にする。Breaths.csv の Axis_<波形> = \"a;b;最小の目盛り;最大の目盛り\"（値 = a*y + b）、\n  P_min / P_max などは描画領域（画面の縦の軸線）の下端・上端の値（0.8.1。0.8.0 までは目盛りの最小・最大の数字で、\n  一番下の目盛りより下に出た波形がチャートの外に出ていた）\n\n## Expected Layout\nSee `layout.jpg`（赤枠: OCR（Settings.OCR_FIELDS）、白枠: 波形、青枠: 画面確認用の縦軸目盛り）。\n\n## フレームレートとフレームの画像\n- 解析のフレームレートは 10 fps 以外でもよい（engine_api 2。5・10・30 fps で確認）。秒とフレーム数の換算は `post_ocr.fps` を使う。\n  設定の `stable_frames` は 10 fps のときのフレーム数で、ほかの fps では同じ時間に換算する\n- フレームの画像は、波形の抽出で必要なものだけを `cv2.imread` で読む（engine_api 3。2 分の動画で 40 枚程度）\n\n## Limitations\n- P0.1 は、サンプル動画で「---」（測定なし）だったため、数値の読み取りは未確認（負の値も読む設定）\n- 波形の縦軸の目盛りは、文字の見本（axis_glyphs.npz）と照合して読む。見本に「9」が無い（作成に使った動画に出てこなかった）ので、\n  「9」を含む目盛り（90 など）は読めず、その波形は直前に読めた目盛りで換算する（Alert に Axis?）\n- 縦軸の目盛りが読めた波形が3つ未満のフレーム（ポップアップ・別の画面）は Abnormal（Alert に Abnormal）。\n  ポップアップの間も Hamilton は裏で波形を描き続けるので、Abnormal を含む呼吸も波形を読む（0.8.0）。\n  列を読む画像がポップアップの最中なら、ポップアップが消えた直後のフレームから4つの波形を読む（Breaths.csv の Wave_Popup に Reread）。\n  ポップアップが長く（1周 22秒以上）その列が上書きされていたら、ポップアップの間も見えている気道内圧の欄から Paw だけを読む（PawOnly）。\n  途中で画面が消去された場合や、気道内圧の欄も見えない場合は空欄\n- 横軸（掃引の幅 22秒）を変えた画面には未対応\n- 1周（22秒）より長い呼吸は最後の1周分だけ（Alert に Long）\n- 録画の最初と最後の呼吸は途中で切れている（Alert に Fragment）\n- 三角を見つけられず、自発でも C になる呼吸がある（Ptranspulm 2026-10-09 で自発 1103 呼吸のうち 5 呼吸。原因は未調査）\n\n## Author\n- VentOCR Developer Team\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume",
+            "Pes",
+            "Ptranspulm"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VTE": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Compliance": {
+                "unit": "mL/cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ppeak": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "MinVol": {
+                "unit": "L/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "P01": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Mode": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Rate": {
+                "unit": "b/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Pinsp": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_PEEP": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Oxygen": {
+                "unit": "%",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "VTE_displayed": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Compliance_displayed": {
+                "unit": "mL/cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ppeak_displayed": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "MinVol_displayed": {
+                "unit": "L/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "P01_displayed": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Trigger": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Pes": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ptranspulm": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            }
+          }
+        },
+        {
+          "version": "0.2.3",
+          "tag": "v0.2.3",
+          "commit": "c348dc995f9190667ac1f861eae0f273f84a05f4",
+          "core_version": "0.2.3",
+          "manifest": {
+            "engine_key": "hamilton_ventocr",
+            "display_name": "Hamilton",
+            "developer": "VentOCR Developer Team",
+            "version": "0.2.3",
+            "engine_api": 3,
+            "ventocr_min": "0.6.2",
+            "description": "Hamilton ventilator OCR engine. Breath = display update of Compliance / VTE. OCR (selectable): VTE, Compliance, Ppeak, MinVol, P0.1, mode, set rate / ΔPinsp / PEEP / oxygen. Waveforms: Paw (Pressure), Flow, Volume, and the 4th panel as Pes or Ptranspulm (option post_ocr.ptranspulm) with wrap-around sweep (50 px/s, 22 s per sweep on 1920x1080). Trigger: A (patient-triggered, pink triangle under the Paw time axis) / C (machine-triggered) / blank (unknown: the Paw panel was hidden, or the screen was cleared during the breath); a new triangle without a display update also starts a breath.",
+            "base_resolution": "1920x1080",
+            "supported_resolutions": [
+              "1920x1080"
+            ],
+            "has_extract_waves": true,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VTE",
+                "Compliance",
+                "Ppeak",
+                "MinVol",
+                "P01",
+                "Mode",
+                "Set_Rate",
+                "Set_Pinsp",
+                "Set_PEEP",
+                "Set_Oxygen",
+                "Sweep_X",
+                "BreathMark",
+                "Trigger_New"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "VTE",
+                "Compliance",
+                "Ppeak",
+                "MinVol",
+                "P01",
+                "Mode",
+                "Set_Rate",
+                "Set_Pinsp",
+                "Set_PEEP",
+                "Set_Oxygen",
+                "Trigger",
+                "Duration"
+              ]
+            },
+            "breath_summary": [
+              "Trigger",
+              "VTE",
+              "Compliance",
+              "Ppeak",
+              "MinVol",
+              "P01",
+              "Mode",
+              "Set_Rate",
+              "Set_Pinsp",
+              "Set_PEEP",
+              "Set_Oxygen",
+              "VTE_displayed",
+              "Compliance_displayed",
+              "Ppeak_displayed",
+              "MinVol_displayed",
+              "P01_displayed"
+            ],
+            "labels": {
+              "Trigger": "トリガー（A: 自発 / C: 強制 / 空欄: わからない）",
+              "Ppeak": "Ppeak（ピーク圧）",
+              "MinVol": "MinVol（分時換気量）",
+              "P01": "P0.1",
+              "Mode": "換気モード",
+              "Set_Rate": "呼吸回数（設定）",
+              "Set_Pinsp": "Δ吸気圧（設定）",
+              "Set_PEEP": "PEEP（設定）",
+              "Set_Oxygen": "酸素濃度（設定）",
+              "VTE_displayed": "VTE (displayed)",
+              "Compliance_displayed": "Compliance (displayed)",
+              "Ppeak_displayed": "Ppeak (displayed)",
+              "MinVol_displayed": "MinVol (displayed)",
+              "P01_displayed": "P0.1 (displayed)"
+            },
+            "accuracy": {
+              "VTE": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "Compliance": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL/cmH2O"
+              },
+              "Ppeak": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "MinVol": {
+                "method": null,
+                "threshold": null,
+                "unit": "L/min"
+              },
+              "P01": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Mode": {
+                "method": null,
+                "threshold": null
+              },
+              "Set_Rate": {
+                "method": null,
+                "threshold": null,
+                "unit": "b/min"
+              },
+              "Set_Pinsp": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Set_PEEP": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Set_Oxygen": {
+                "method": null,
+                "threshold": null,
+                "unit": "%"
+              },
+              "VTE_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "Compliance_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL/cmH2O"
+              },
+              "Ppeak_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "MinVol_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "L/min"
+              },
+              "P01_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              },
+              "Trigger": {
+                "method": null,
+                "threshold": null
+              }
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Pressure",
+                  "label": "Paw",
+                  "unit": "cmH2O",
+                  "color": "#d62728",
+                  "scale": {
+                    "min": "P_min",
+                    "max": "P_max"
+                  }
+                },
+                {
+                  "name": "Flow",
+                  "unit": "L/min",
+                  "color": "#1f77b4",
+                  "scale": {
+                    "min": "F_min",
+                    "max": "F_max"
+                  }
+                },
+                {
+                  "name": "Volume",
+                  "unit": "mL",
+                  "color": "#2ca02c",
+                  "scale": {
+                    "min": "V_min",
+                    "max": "V_max"
+                  }
+                },
+                {
+                  "name": "Pes",
+                  "label": "Pes",
+                  "unit": "cmH2O",
+                  "color": "#8c564b",
+                  "scale": {
+                    "min": "Pes_min",
+                    "max": "Pes_max"
+                  }
+                },
+                {
+                  "name": "Ptranspulm",
+                  "label": "Ptranspulm",
+                  "unit": "cmH2O",
+                  "color": "#8c564b",
+                  "scale": {
+                    "min": "Ptranspulm_min",
+                    "max": "Ptranspulm_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "Trigger",
+                  "label": "トリガー（A: 自発 / C: 強制 / 空欄: わからない）"
+                },
+                {
+                  "name": "VTE",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Compliance",
+                  "unit": "mL/cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Ppeak",
+                  "label": "Ppeak（ピーク圧）",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "MinVol",
+                  "label": "MinVol（分時換気量）",
+                  "unit": "L/min",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "P01",
+                  "label": "P0.1",
+                  "unit": "cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Mode",
+                  "label": "換気モード"
+                },
+                {
+                  "name": "Set_Rate",
+                  "label": "呼吸回数（設定）",
+                  "unit": "b/min",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_Pinsp",
+                  "label": "Δ吸気圧（設定）",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_PEEP",
+                  "label": "PEEP（設定）",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_Oxygen",
+                  "label": "酸素濃度（設定）",
+                  "unit": "%",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "VTE_displayed",
+                  "label": "VTE (displayed)",
+                  "unit": "mL",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Compliance_displayed",
+                  "label": "Compliance (displayed)",
+                  "unit": "mL/cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Ppeak_displayed",
+                  "label": "Ppeak (displayed)",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "MinVol_displayed",
+                  "label": "MinVol (displayed)",
+                  "unit": "L/min",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "P01_displayed",
+                  "label": "P0.1 (displayed)",
+                  "unit": "cmH2O",
+                  "format": "{:.1f}"
+                }
+              ]
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "ocr_keys": [
+                "VTE",
+                "Compliance",
+                "Ppeak"
+              ],
+              "use_gpu": true,
+              "diff_thresh": 3.0
+            },
+            "post_ocr": {
+              "breath_trigger": [
+                "Compliance",
+                "VTE"
+              ],
+              "boundary_shift_sec": -0.5,
+              "stable_frames": 2,
+              "trim_to_breath": true,
+              "ptranspulm": false
+            }
+          },
+          "readme": "# Hamilton VentOCR Engine\n\n## Supported Devices\n- Hamilton の人工呼吸器（左に数値、中央に 気道内圧 / フロー / ボリューム / Pes または Ptranspulm の4波形が並ぶ画面）\n- 1920x1080 で収録した動画（ほかの解像度は 1920x1080 に縮小・拡大してから読む）\n\n## Description\n- **1呼吸** = 左側の数値（コンプライアンス・呼気VT）の表示が更新されてから、次に更新されるまで。\n  - 表示の更新は吸気の始まりより約0.16秒遅れるので、区切りは更新の `boundary_shift_sec`（既定 -0.5秒）前に置く（呼気の終わりで切れる）\n  - 波形の区切りは吸気の始まりへ合わせる（`trim_to_breath`）。自発の呼吸は患者トリガーの三角の 0.08秒前（0.8.1）、\n    強制の呼吸は流量の立ち上がりの足元の 0.04秒前。三角は Hamilton が呼吸を始めた位置そのもので、Volume が 0 に戻る位置と一致する\n  - コンプライアンスが前の呼吸と同じ値のときも区切れるよう、既定では VTE の更新も区切りに使う（`breath_trigger`）\n  - 更新 = VTE かコンプライアンスの新しい値が `stable_frames`（既定 2）フレーム以上続いたこと（0.7.0）。区切りはその値が出た最初のフレーム。\n    空欄（「---」・読めない）も1つの値。1フレームだけの値は無視する。2つの値の変化が1フレーム差なら1回の更新。\n    時間で間引かない（0.6 までの min_breath_sec = 1秒 は廃止。1秒未満の短い呼吸もそのまま1呼吸）\n  - 前後の呼吸の VTE・コンプライアンスがたまたま同じ値だと表示が変わらないので、患者トリガーの三角（下記）の前 0.5秒〜後 1秒に\n    表示の更新が無ければ、三角の 0.3秒後に更新があったものとして区切る（0.8.0。Alert に TriggerSplit）。\n    Abnormal の近く（前 3秒〜後 1秒）と録画の終わりは除く。強制の呼吸（三角が出ない）どうしが同じ値のときは区切れない\n- **OCR**（解析ダイアログの「OCR する値」で選ぶ。既定: VTE・Compliance・Ppeak）:\n  - 測定値: 呼気VT（`VTE`）、コンプライアンス（`Compliance`）、ピーク圧（`Ppeak`）、分時換気量（`MinVol`）、P0.1（`P01`）。\n    画面の数値は「直前の呼吸」の測定値なので、Breaths.csv の値は次の呼吸の間に表示される値、`*_displayed` はその呼吸の間に表示されていた値\n  - 設定値: 換気モード（`Mode`、文字）、呼吸回数（`Set_Rate`）、Δ吸気圧（`Set_Pinsp`）、PEEP/CPAP（`Set_PEEP`）、酸素濃度（`Set_Oxygen`）。\n    その呼吸の間に表示されていた値\n  - 選ばなかった値の列は出力しない\n- **波形**: Pressure（気道内圧 Paw）、Flow、Volume と、4 段目の圧。BreathCSVs/<n>.csv の列は X, Pressure, Flow, Volume, Pes（または Ptranspulm）\n  - 4 段目は Hamilton の設定で Pes（食道内圧）か Ptranspulm（経肺圧 = Paw − Pes）を表示できる。どちらかは解析の設定\n    `post_ocr.ptranspulm`（既定オフ = Pes）で選ぶ（0.2.0）。オンなら列の名前が Ptranspulm になり、Breaths.csv・Frames.csv の\n    Axis_Ptranspulm・Ptranspulm_min / Ptranspulm_max、fields.txt・scale_meta.json の名前も変わる（値は同じ）。\n    パネルの名前は読まないので、動画ごとに正しく選ぶこと。記録の途中で切り替えた動画には対応しない\n  - 掃引は 50 px/秒で左から右へ描き、x=1567 に達すると x=467 に戻って上書きする（1周 22秒、wrap around）\n  - 各フレームで前のフレームから変化した列の右端（= ペン先 + 消去帯 3px）を記録し、毎フレームのペン先を追跡する（0.6.0。core.track_sweep）\n  - 画面操作などで描画が止まり、画面全体が消去されて途中から左端に戻ることがある。その前の部分は消去の前にペン先を見つけた最後の\n    フレームから読む（0.2.3。左端に戻ったと分かるのは数フレーム後で、0.2.2 までは消去された画面を読んでいた）。\n    描画が止まっていた間は空欄（3割以上が空欄の呼吸は Alert に Partial）。画面が消去された呼吸は Alert に Cleared（0.2.3）。\n    Hamilton が測定値を出していない間（Ptranspulm 2026-10-09 の B541 では約 1.5 秒。Study Recorder でも Paw 0・Flow なし）は\n    画面にも波形が無いので、取り戻せない\n  - 縦軸の範囲を超えた波形は描画領域の端で切れる。その後 Hamilton が縦軸を広げたら、列がまだ画面に残っているうちに読み直す\n    （Breaths.csv の Wave_Reread に読み直した波形。読み直せなければ Alert に Clipped。ボリュームの下端（0 を下回る部分）は判定しない）\n  - 呼吸の波形は、その呼吸の最後のフレームから「開始時のペン先の次の列〜終了時のペン先の列」を切り出す（折り返しをまたぐ呼吸はつなぐ）\n  - 各点の時刻 = `Wave_T0` + 行番号 / `Wave_Rate`（Breaths.csv）\n- **トリガー**（0.8.0）: Breaths.csv の `Trigger` = `A`（患者の自発のトリガー）/ `C`（強制。器械のトリガー）。呼吸プロパティのサマリーにも出す\n  - Hamilton が自発トリガーと判定した呼吸の始まりに、気道内圧の時間軸のすぐ下にピンクの三角（▲）が描かれる。\n    その呼吸の間に新しい三角が描かれたら A、無ければ C。ポップアップの間も気道内圧の欄が見えていれば（縦軸の目盛りを読めれば）三角を使う。\n    気道内圧の欄が見えないフレームを含み、三角が無い呼吸は空欄（隠れていたかもしれない）。\n    画面が消去された呼吸（Alert に Cleared）で、波形の描かれていない区間が 0.3 秒以上あり三角が無い呼吸も空欄\n    （その間に吸気が始まり、三角が描かれなかったかもしれない。0.2.3。Settings.CLEARED_GAP_SEC）\n  - initial_ocr で各フレームの三角の頂点を記録し（Frames.csv の `Trigger_Apexes`）、post_ocr でペン先のすぐ後ろ（0〜40px）に\n    新しく出たものを選ぶ（`Trigger_New`）。画面には1周前の三角もペン先より右に残っているので、位置で区別する。\n    1周前の三角とほぼ同じ位置に描き直されたものは、ペン先が通り過ぎた後も残っていることで区別する\n  - 時間軸は気道内圧の 0 の位置で、縦軸のスケールにより上下に動くので、気道内圧の欄（y=100〜315）の中から色と大きさで探す。\n    時間軸の目盛りの数字（5・10・15・20）と重なった三角は、色がにじんで小片に分かれるので、つないでから判定する\n\n## 縦軸のスケール（0.5.0）\n- Hamilton は波形ごとに縦軸のスケールを頻繁に自動で変える（Ptranspulm 2026-10-09 の1時間で15通り。\n  Paw 0〜20 / 0〜40、Flow ±45 / ±75 / ±150、Volume 400 / 800 / 1600、Pes 0〜20 / -10〜20 / -20〜20 / -20〜40 / -40〜40 など。0 の位置も動く）\n- 各フレームで縦軸の目盛りの数字（x=414〜462）を読み、波形ごとに「数字の y → 値」を直線で当てはめる（axis_scale.py）。\n  数字は 0〜9 と「-」だけで毎回同じ形なので、汎用の OCR ではなく1文字ずつ見本と照合する\n- 呼吸の波形は、切り出した最後のフレームの換算式で物理量にする。Breaths.csv の Axis_<波形> = \"a;b;最小の目盛り;最大の目盛り\"（値 = a*y + b）、\n  P_min / P_max などは描画領域（画面の縦の軸線）の下端・上端の値（0.8.1。0.8.0 までは目盛りの最小・最大の数字で、\n  一番下の目盛りより下に出た波形がチャートの外に出ていた）\n\n## Expected Layout\nSee `layout.jpg`（赤枠: OCR（Settings.OCR_FIELDS）、白枠: 波形、青枠: 画面確認用の縦軸目盛り）。\n\n## フレームレートとフレームの画像\n- 解析のフレームレートは 10 fps 以外でもよい（engine_api 2。5・10・30 fps で確認）。秒とフレーム数の換算は `post_ocr.fps` を使う。\n  設定の `stable_frames` は 10 fps のときのフレーム数で、ほかの fps では同じ時間に換算する\n- フレームの画像は、波形の抽出で必要なものだけを `cv2.imread` で読む（engine_api 3。2 分の動画で 40 枚程度）\n\n## Limitations\n- P0.1 は、サンプル動画で「---」（測定なし）だったため、数値の読み取りは未確認（負の値も読む設定）\n- 波形の縦軸の目盛りは、文字の見本（axis_glyphs.npz）と照合して読む。見本に「9」が無い（作成に使った動画に出てこなかった）ので、\n  「9」を含む目盛り（90 など）は読めず、その波形は直前に読めた目盛りで換算する（Alert に Axis?）\n- 縦軸の目盛りが読めた波形が3つ未満のフレーム（ポップアップ・別の画面）は Abnormal（Alert に Abnormal）。\n  ポップアップの間も Hamilton は裏で波形を描き続けるので、Abnormal を含む呼吸も波形を読む（0.8.0）。\n  列を読む画像がポップアップの最中なら、ポップアップが消えた直後のフレームから4つの波形を読む（Breaths.csv の Wave_Popup に Reread）。\n  ポップアップが長く（1周 22秒以上）その列が上書きされていたら、ポップアップの間も見えている気道内圧の欄から Paw だけを読む（PawOnly）。\n  途中で画面が消去された場合や、気道内圧の欄も見えない場合は空欄\n- 横軸（掃引の幅 22秒）を変えた画面には未対応\n- 1周（22秒）より長い呼吸は最後の1周分だけ（Alert に Long）\n- 録画の最初と最後の呼吸は途中で切れている（Alert に Fragment）\n- 三角を見つけられず、自発でも C になる呼吸がある（Ptranspulm 2026-10-09 で自発 1103 呼吸のうち 5 呼吸。そのうち B541 は、\n  吸気の間 Hamilton が測定値を出さず画面を消去したため三角が描かれなかった。0.2.3 から空欄。ほかは原因を未調査）\n\n## Author\n- VentOCR Developer Team\n",
           "layout": "layout.jpg",
           "waveforms": [
             "Pressure",
@@ -2391,5 +4049,5 @@
       ]
     }
   ],
-  "updated": "2026-10-21"
+  "updated": "2026-10-25"
 }
