@@ -9583,6 +9583,251 @@
               "Merged?"
             ]
           }
+        },
+        {
+          "version": "0.2.5",
+          "tag": "v0.2.5",
+          "commit": "623edd6c4c199ef4f3e362e01c8ed1f9dcf431a9",
+          "core_version": "0.2.5",
+          "manifest": {
+            "engine_key": "V600_ventocr",
+            "display_name": "V600",
+            "developer": "VentOCR Developer Team",
+            "version": "0.2.5",
+            "ventocr_min": "0.6.2",
+            "engine_api": 3,
+            "description": "Draeger Savina 300 / V600 ventilator OCR engine. Breath = display update of VT. Waveforms: Pressure, Flow, Volume (filled curves) with wrap-around sweep tracked frame by frame; y-axis scale read by OCR.",
+            "sample_video": "V600_Sample.mp4",
+            "base_resolution": "1920x1080",
+            "supported_resolutions": [
+              "3840x2160",
+              "1920x1080"
+            ],
+            "has_extract_waves": true,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VT",
+                "Sweep_X",
+                "BreathMark"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "VT",
+                "Duration",
+                "Trigger"
+              ]
+            },
+            "breath_summary": [
+              "Trigger",
+              "VT",
+              "VT_displayed"
+            ],
+            "labels": {
+              "Trigger": "Trigger (A: patient / C: machine / blank: unknown)",
+              "VT_displayed": "VT (displayed)"
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Pressure",
+                  "label": "Paw",
+                  "unit": "cmH2O",
+                  "color": "#d62728",
+                  "scale": {
+                    "min": "P_min",
+                    "max": "P_max"
+                  }
+                },
+                {
+                  "name": "Flow",
+                  "unit": "L/min",
+                  "color": "#1f77b4",
+                  "scale": {
+                    "min": "F_min",
+                    "max": "F_max"
+                  }
+                },
+                {
+                  "name": "Volume",
+                  "unit": "mL",
+                  "color": "#2ca02c",
+                  "scale": {
+                    "min": "V_min",
+                    "max": "V_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "VT",
+                  "label": "VT",
+                  "unit": "mL"
+                },
+                {
+                  "name": "VT_displayed",
+                  "label": "VT (displayed)",
+                  "unit": "mL"
+                },
+                {
+                  "name": "Trigger",
+                  "label": "Trigger (A: patient / C: machine / blank: unknown)"
+                }
+              ],
+              "alerts": [
+                {
+                  "name": "Fragment",
+                  "label": "Cut at the start or end of the recording",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Abnormal",
+                  "label": "Popup or other screen; no waveform could be read",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Long",
+                  "label": "Longer than one sweep; earlier sweeps could not be read",
+                  "exclude_from_accuracy": false
+                },
+                {
+                  "name": "Partial",
+                  "label": "More than 30% of the waveform missing (screen cleared, etc.)",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Merged?",
+                  "label": "At least 1.7x the neighbouring breaths (possibly two breaths merged)",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Popup",
+                  "label": "Popup over the waveforms; all three waveforms were read from the screen after it closed (the first frame without it)",
+                  "exclude_from_accuracy": false
+                },
+                {
+                  "name": "Clipped",
+                  "label": "Waveform reaches the edge of its band (values beyond the axis are not on the screen)",
+                  "exclude_from_accuracy": false
+                },
+                {
+                  "name": "Short",
+                  "label": "Shorter than 0.5 s (boundary could not be placed well)",
+                  "exclude_from_accuracy": false
+                }
+              ]
+            },
+            "accuracy": {
+              "VT": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "VT_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              }
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "skip_keys": [],
+              "use_gpu": true,
+              "diff_thresh": 3.0
+            },
+            "post_ocr": {
+              "boundary_shift_sec": -1.0,
+              "stable_frames": 3,
+              "min_breath_sec": 1.0,
+              "min_update_sec": 0.5,
+              "abnormal_screen_diff": 8.0,
+              "wave_split": true,
+              "split_flow": 5.0,
+              "split_lead_sec": 0.4,
+              "split_insp_sec": 0.15,
+              "split_min_insp_ml": 50.0,
+              "exhaled_ml": 30.0,
+              "exhaled_frac": 0.1,
+              "trim_to_breath": true,
+              "frames_from_wave": true
+            }
+          },
+          "readme": "# V600 VentOCR Engine\n\n## Supported Devices\n- Dräger Savina 300 / V600 (screen with VT, MV, respiratory rate, and leak % on the right, and three waveforms — airway pressure / flow / volume — on the left)\n- Videos recorded at 3840x2160 or 1920x1080 (downscaled to 1920x1080 before reading)\n\n## Description\n- **1 breath** = from one update of the VT display until the next update\n  - The display update lags the start of inspiration by 0.2-1.4 s depending on the mode, so the boundary is first placed `boundary_shift_sec` (default -1.0 s) before the update.\n    The waveform boundary is then moved to the last inspiratory onset 0.15-1.6 s before the update (0.2.2), or, if there is none, to the onset nearest the boundary\n  - A change counts as an update only when the new value lasts at least `stable_frames` (default 3) frames (misreads of 1-2 frames are ignored)\n    and comes at least `min_update_sec` (default 0.5 s; 0.2.2, was `min_breath_sec` 1.0 s) after the previous update\n  - Updates are also read while a popup covers the waveforms, as long as the \"VT mL\" label is visible (Frames.csv `VT_Label` ≥ 0.4,\n    the overlap of its text with `vt_label_reference.png`; `VT_Visible` = 1). 0.2.3; up to 0.2.2 the breaths under a popup merged into one\n  - A breath with a waveform starts at its inspiratory onset: `Frame`, `Time`, `Duration` and `Start_File_Name` / `End_File_Name`\n    (the span the app plays) follow `Wave_T0` (0.2.3, `frames_from_wave`; up to 0.2.2 they started `boundary_shift_sec` before the update).\n    The first breath and breaths without a waveform keep the frames from the update. `VT` / `VT_displayed` do not change\n- **Waveform-based splits** (`wave_split`, enabled by default): if VT has the same value as the previous breath, the display update is not visible and two breaths merge into one.\n  If a breath's waveform contains a second inspiratory onset (flow > `split_flow` 5 L/min) and the volume has returned\n  to baseline (fully exhaled) just before it, it is split off as a separate breath (`split_lead_sec` 0.4 s before the onset).\n  - Fully exhaled = volume over the preceding 0.2 s ≤ max(`exhaled_ml` 30 mL, `exhaled_frac` 0.1 × preceding max volume)\n  - If the next inspiration arrives before full exhalation (a single biphasic breath, e.g. Reverse Triggering), it is not split\n    (no Alert since 0.2.4: asynchrony is tagged by the user; up to 0.2.3 `RT?`)\n  - Onsets whose new inspiratory volume is below `split_min_insp_ml` (50 mL) are ignored, and so are onsets less than `min_breath_sec` (1.0 s)\n    after the previous split or before the end of the breath (0.2.2: the end limit was half of it; an onset just before the end belongs to the next breath)\n  - Split breaths have `Boundary` = `Waveform` in Breaths.csv (breaths split by a VT update have `VT`, and the first breath has `Start`).\n    The display did not change inside the merged breath, so every piece but the last has `VT` = the value displayed during the breath (`VT_displayed`),\n    and the last piece has the value displayed after it (0.2.2; up to 0.2.1 every piece had the value displayed after it)\n  - A breath longer than one sweep is read from one image per sweep (the last frame before each return to the left edge), so it can be split too (0.2.2)\n  - Breath numbers are reassigned in time order (BreathNumber in Frames.csv is updated to match)\n- **OCR**: VT (leak-compensated). The on-screen VT is the value of the \"previous breath\", so `VT` in Breaths.csv is the value displayed during the next breath,\n  and `VT_displayed` is the value that was displayed during that breath\n- **Trigger** (0.2.4): `Trigger` in Breaths.csv = `A` (patient-triggered) / `C` (machine) / blank (unknown). The V600 draws a lung icon\n  just below the airway pressure band, centred on the inspiratory onset, at each patient-triggered breath (rows 305-330; dark in the day\n  theme, light in Night Mode). A = an icon in the first 20 columns of the breath's waveform; blank = no waveform, the first or last\n  breath, or those columns missing (screen cleared, redrawn after a popup)\n- **Waveforms**: Pressure, Flow, Volume. Columns of BreathCSVs/<n>.csv are X, Pressure, Flow, Volume\n  - Waveforms are drawn filled from the baseline to the value (mandatory breaths in dark blue, spontaneous breaths in light blue). Value of each column = the edge of the fill farthest from the baseline\n  - The vertical-axis scale (flow ±100/±50, volume 1000/500, etc.) can be changed on screen, and past waveforms are redrawn too.\n    The vertical-axis max number is OCR'd, and each breath is converted using the scale of the frame its waveform was cut from (P_/F_/V_min and max in Breaths.csv)\n- **Sweep**: drawn left to right, then returns to the left edge and overwrites (wrap around). The return position and speed are not constant, so the pen tip is tracked in every frame\n  - It returns to the left edge (x=62) when it reaches the right edge (x=1362), or when the next breath starts at x≈1100 or beyond (the remaining right side is erased)\n  - Changing the ventilation mode clears the whole screen\n  - The speed depends on the mode (52 px/s in the sample, 64 px/s in the PC-BIPAP segment)\n  - Pen tip = in the airway pressure band, one column before the left end of the unfilled columns (erase band, about 41px wide)\n  - Time of each point = `Wave_T0` + row index / `Wave_Rate` (Breaths.csv)\n  - A breath whose image has a popup is read from the first later image without one (up to 30 s later); columns the pen has\n    redrawn by then are missing (0.2.3). A breath after a breath without a waveform is read from 1.75 s earlier, so its\n    inspiratory onset is included (0.2.3)\n\n## Expected Layout\nSee `layout.jpg` (red boxes: OCR, green boxes: waveform bands, red lines: baselines, gray boxes: areas not read, blue box: vertical-axis ticks used for the screen check).\n\n## Alert (Breaths.csv)\n- `Merged?`: a breath at least 1.7x the median duration of the surrounding breaths that could not be split by waveform because it has no waveform\n  (not set on breaths whose waveform was examined, since those are already split; remaining long breaths have a single inspiration followed by apnea)\n- `Abnormal`: a popup or another screen, and no image without it showed the breath's waveform (no waveform is output). 0.2.3: breaths read\n  from a later image have no `Abnormal` Alert (the `Abnormal` column of Breaths.csv still says whether any frame had a popup)\n- `Popup` (0.2.4): a popup was shown over the waveforms during the breath; all three waveforms (Paw included) were read from the screen after\n  the popup closed (the first frame without it), not from the breath's own frames. The capture the app shows for the breath still has the popup\n  (the trace keeps being drawn under the popup). Not excluded from accuracy\n- `Clipped` (0.2.4): a waveform reaches the edge of its band (or the label at the top of the band), so values beyond the axis are not on\n  the screen (e.g. Volume above 500 mL with the 500 mL axis). VT is read from the number and is not affected. Not excluded from accuracy\n- `Short` (0.2.4): shorter than 0.5 s (a boundary that could not be placed well). Not excluded from accuracy\n- `Partial`: the screen was cleared (e.g. mode change) and 30% or more of the waveform is missing\n- `Long`: a breath longer than one sweep whose earlier sweeps could not be read (only the sweeps after the unreadable image are used). Up to 0.2.1 every breath longer than one sweep\n- `Fragment`: the first and last breaths of the recording\n\n## Limitations\n- When VT has the same value as the previous breath, the display update is not visible. Breaths are split using the waveform instead (8 places in the sample; this happens more often when VT is stable, as in PC-AC)\n- The airway pressure vertical-axis minimum is assumed to be fixed at -5 (the maximum is read). Maximum values other than 30 are unverified\n- With PEEP 0 (no airway pressure fill), the pen tip cannot be detected\n\n## Author\n- VentOCR Developer Team\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume"
+          ],
+          "validation": {
+            "reported": true,
+            "engine_version": "0.2.5",
+            "date": "2026-10-31",
+            "reporter": "VentOCR Developer Team",
+            "videos": 1,
+            "breaths": 387,
+            "modes": [
+              "PC-AC",
+              "PC-BIPAP/PS",
+              "VC-AC",
+              "SPN-CPAP/PS"
+            ],
+            "comment": "0.2.5 changes text only (the Popup alert description); analysis results are the same as 0.2.4, so the 0.2.4 evaluation is carried over. Reference: the ventilator's own MEDIBUS log recorded with the video (Draeger V600, 32 min, 1920x1080 30 fps, analysed at 10 fps; realtime Paw/Flow/Volume at about 100 Hz with inspiration-start flags, numerics about once a second). The log clock was aligned to the video by cross-correlating Flow (r 0.985). Engine breaths (Wave_T0) were matched one-to-one to the log's inspiration starts within 1 s: 387 of 387 matched, 0 missed; 1 extra (a mode-change screen clear, flagged Partial). Breath start (Frame) vs the log's onset: median -0.005 s, 95% within 0.11 s; Duration off by more than 0.5 s for 1 of 385 breaths. New in 0.2.4: Trigger (lung icon at the inspiration start): SPN-CPAP/PS 28 of 28 read A; of the 354 breaths the log counts as mandatory, 351 read C and 3 blank (unknown); 4 PC-AC breaths the log counts as spontaneous read C. The log's RRtrig is 0 throughout, so patient-triggered machine breaths are not tested. Alerts added (not excluded from accuracy): Popup 11 (breaths under settings popups, read from the screen after the popup closes), Clipped 11 (all checked on the screen: the trace reaches the axis line or runs under a label), Short 0. RT? removed. Values and waveforms are for the 378 matched breaths without an excluded Alert. Same recording and method as 0.2.1 to 0.2.3.",
+            "values": {
+              "VT": {
+                "unit": "mL",
+                "metric": "Bias (95% LoA, Bland-Altman) vs MEDIBUS VT",
+                "result": "0.05 (-2.6 to 2.7)",
+                "n": 378,
+                "comment": "96.6% exact, 99.2% within 5 mL, 100% within 10%. Per mode, bias (LoA): PC-AC 0.01 (-0.1 to 0.2), PC-BIPAP/PS 0.0 (0 to 0), VC-AC 0.0 (0 to 0), SPN-CPAP/PS -0.14 (-7.3 to 7.0, n 21). Compared with the log's VT shown during the next breath (the engine's VT); against VTe the bias is about +11 mL"
+              },
+              "VT_displayed": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": "Not evaluated separately: the value shown during the breath (the previous breath's VT)"
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": "Matched to the log's inspiration starts within 1 s",
+                "result": "100%",
+                "n": 387,
+                "comment": "387/387 matched, including the 11 breaths under settings popups. 1 extra breath (Partial, mode-change screen clear). Breath start vs the log's onset: median -0.005 s, 95% within 0.11 s"
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": "Pearson r / RMSE vs MEDIBUS realtime (median per breath)",
+                "result": "0.998 / 0.32",
+                "n": 378,
+                "comment": "RMSE in cmH2O (log in mbar)"
+              },
+              "Flow": {
+                "metric": "Pearson r / RMSE vs MEDIBUS realtime (median per breath)",
+                "result": "0.99 / 1.33",
+                "n": 378,
+                "comment": "RMSE in L/min"
+              },
+              "Volume": {
+                "metric": "Pearson r / RMSE vs MEDIBUS realtime (median per breath)",
+                "result": "0.998 / 4.2",
+                "n": 378,
+                "comment": "RMSE in mL"
+              }
+            },
+            "excluded_alerts": [
+              "Fragment",
+              "Abnormal",
+              "Partial",
+              "Merged?"
+            ]
+          }
         }
       ]
     }
