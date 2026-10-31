@@ -7928,6 +7928,269 @@
               "Clipped"
             ]
           }
+        },
+        {
+          "version": "0.3.2",
+          "tag": "v0.3.2",
+          "commit": "ba7963450c7858d94811b8c9db2816501a2b915f",
+          "core_version": "0.3.2",
+          "manifest": {
+            "engine_key": "postnava_ventocr",
+            "display_name": "PostNAVA",
+            "developer": "VentOCR Developer Team",
+            "version": "0.3.2",
+            "ventocr_min": "0.6.2",
+            "engine_api": 3,
+            "description": "Servo-U Edi monitor screen (e.g. after NAVA / standby). OCR: Edipeak, Edimin. Breath = Edimin display update (neural inspiration onset). Waveform: Edi with wrap-around sweep (about 164 px/s, 5.4 s per sweep on 1280x720).",
+            "sample_video": "PostNAVA_VentOCR_sample.mp4",
+            "base_resolution": "1280x720",
+            "supported_resolutions": [
+              "1280x720",
+              "1920x1080"
+            ],
+            "has_extract_waves": true,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "EdiPeak",
+                "Edimin",
+                "EdiPeak_Update",
+                "Edimin_Update",
+                "Sweep_X",
+                "BreathMark",
+                "BreathNumber",
+                "Abnormal"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "EdiPeak",
+                "Edimin",
+                "Edimin_displayed",
+                "Duration",
+                "Wave_Max",
+                "Wave_Min",
+                "Clipped_Points",
+                "Alert"
+              ],
+              "waves": [
+                "X",
+                "Edi"
+              ]
+            },
+            "breath_summary": [
+              "EdiPeak",
+              "Edimin",
+              "Edimin_displayed",
+              "Wave_Max",
+              "Clipped_Points"
+            ],
+            "labels": {
+              "Edimin_displayed": "Edimin (displayed)",
+              "Wave_Max": "Edi max (waveform)",
+              "Clipped_Points": "Clipped points"
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Edi",
+                  "unit": "µV",
+                  "color": "#9467bd",
+                  "scale": {
+                    "min": "E_min",
+                    "max": "E_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "EdiPeak",
+                  "label": "EdiPeak",
+                  "unit": "µV"
+                },
+                {
+                  "name": "Edimin",
+                  "label": "Edimin",
+                  "unit": "µV"
+                },
+                {
+                  "name": "Edimin_displayed",
+                  "label": "Edimin (displayed)",
+                  "unit": "µV"
+                },
+                {
+                  "name": "Wave_Max",
+                  "label": "Edi max (waveform)",
+                  "unit": "µV"
+                },
+                {
+                  "name": "Clipped_Points",
+                  "label": "Clipped points"
+                }
+              ],
+              "alerts": [
+                {
+                  "name": "Fragment",
+                  "label": "Cut at the start or end of the recording",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "ScaleUnknown",
+                  "label": "Edi axis label could not be read on an image of the breath (no waveform)",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Abnormal",
+                  "label": "Contains frames of another screen or a popup",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "OnsetEstimated",
+                  "label": "Edimin update not seen; breath onset estimated",
+                  "exclude_from_accuracy": false
+                },
+                {
+                  "name": "NoBreathDetected",
+                  "label": "The ventilator detected no breath (Edipeak \"***\")",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Clipped",
+                  "label": "Waveform clipped at the top of the axis",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "EdiPeakUnreadable",
+                  "label": "Edipeak read far above the waveform and not confirmed on a second reading (value left empty)",
+                  "exclude_from_accuracy": true
+                }
+              ]
+            },
+            "accuracy": {
+              "EdiPeak": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "Edimin": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "Edimin_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "Wave_Max": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "Wave_Min": {
+                "method": null,
+                "threshold": null,
+                "unit": "µV"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              }
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "skip_keys": [],
+              "use_gpu": true,
+              "diff_thresh": 2.0
+            },
+            "post_ocr": {
+              "fps": 10,
+              "edi_scale_max": 20,
+              "min_breath_sec": 0.3,
+              "max_onset_lag_sec": 2.5,
+              "onset_shift_sec": -0.3,
+              "abnormal_screen_diff": 15.0,
+              "scale_fill_sec": 7.0,
+              "peak_search_sec": 1.5
+            }
+          },
+          "readme": "# PostNAVA VentOCR Engine (postnava_ventocr)\n\n## Supported Devices\n- Servo-U \"Edi monitor\" screen (ECG at the top, Edi waveform in the middle, Edipeak / Edimin values on the right; e.g. after weaning from NAVA, in standby)\n- Videos recorded at 1280x720 or 1920x1080 (other resolutions are scaled to 1280x720 before reading)\n\n## Description\n- **OCR**: Edipeak and Edimin (values on the right). Only frames where the display changed are OCR'd\n  - If no breath is detected for about 10 s, both become \"***\" (no value; `NoBreathDetected` in that breath's Alert)\n  - A read that is not what the Servo-U shows (1-2 digits and one decimal, e.g. \"233, 8\" when the decimal point is read as a digit) is read once more at twice the size; if that also fails, it is left empty. Values of 100 µV or more are never read\n  - 0.3.2: an Edipeak of 10 or more above twice the breath's waveform maximum (not clipped) is read again on up to 4 later frames (EasyOCR can read the decimal point as a \"3\": \"43, 8\" for 4.8).\n    A re-read that fits the waveform replaces it; otherwise a value read at least twice with its decimal point is kept (the Servo-U Edipeak can be well above the trace); otherwise it is left empty (`EdiPeakUnreadable` in Alert)\n- **1 breath** = from the onset of an Edi rise to the next breath's onset; breaths are the ones the Servo-U detects (Edipeak display updates)\n  - The Servo-U updates Edimin when Edi rises (onset of neural inspiration), and Edipeak after Edi passes its peak and starts to fall (about 0.35 s later)\n  - When a value equals the previous one the display does not change and the update is invisible, so breaths are counted by Edipeak updates, and the Edimin update just before each (within `max_onset_lag_sec`) is taken as the onset.\n    If it is invisible, the onset is estimated from the typical lag (0.4 s in the sample) (`OnsetEstimated` in Alert)\n  - 0.3.1: the onset is placed on the Edi trace itself (`Onset_Source` = `wave`): the Edi just behind the pen tip in each frame (Frames.csv `Pen_Y`) gives Edi at 10 Hz;\n    the breath's peak is the highest point in the `peak_search_sec` (1.5 s) before its Edipeak update, the trough the lowest point after the previous breath's Edipeak update,\n    and the onset the last frame within max(0.3 µV, 10% of the rise) of the trough. Where the trace does not show it, the Edimin update (`edimin`) or the typical lag (`estimated`)\n    is used, `onset_shift_sec` (default -0.3 s) earlier, and never before the previous breath's Edipeak update.\n    The Edimin update can come well into the rise (validation video 14-58-39: 0.3-1.6 s before the Edipeak update), which made breaths start partway up the rise up to 0.3.0\n- **Values in Breaths.csv**\n  - `EdiPeak`: the Edipeak shown for that breath\n  - `Edimin`: minimum of that breath's expiration = the Edimin shown at the next breath's onset (verified to match the waveform minimum).\n    `Edimin_displayed` is the value shown during that breath (= minimum of the previous breath's expiration). Both are read from the breath's Edipeak update on (the Servo-U updates Edimin after the breath has started)\n  - `Wave_Max` / `Wave_Min`: maximum / minimum of the extracted waveform (µV)\n- **Waveform**: Edi (columns of BreathCSVs/<n>.csv are X, Edi; unit µV)\n  - The sweep draws left to right at about 164 px/s; on reaching x=1046 it returns to x=150 and overwrites (one sweep 896 px ≈ 5.4 s, wrap around)\n  - In each frame, the blank where neither ECG nor Edi is drawn (the erase band ahead of the pen tip, about 35-40 px wide) is located and taken as the pen tip;\n    the sweep speed and phase are estimated from the whole video to determine the pen tip in each frame (false blanks, e.g. while Edi is not drawn, are removed as outliers)\n  - A breath's waveform is cut out from the image of that breath's last frame as \"the column after the start pen tip through the end pen tip column\".\n    For breaths longer than one sweep (about 5.4 s), the missing earlier part is cut out from images of earlier frames and joined (`Wave_Images` = number of images used)\n  - Time of each point = `Wave_T0` + row number / `Wave_Rate` (Breaths.csv)\n  - Vertical axis: 0 µV = panel bottom edge (y=419.4), upper limit = panel top edge (y=219.4) (with the upper limit 20 µV: 10.0 px/µV, calibrated with 24 breaths' Edipeak in the sample, residual SD 0.1 µV)\n  - Upper limit: read from the label at the top left of the Edi band (\"20\", \"25\", ...) with whole-label templates (`axis_labels.npz`, labels 5-80 µV).\n    The Servo-U changes the Edi scale often (auto-scaling; in the validation videos every few to tens of seconds) and redraws the whole trace at the new scale in the same frame,\n    so each image's columns are converted with the label read on that image (`Edi_Scale` in Frames.csv; Breaths.csv `Edi_Scale` = the breath's last image, `E_max` = the largest in the breath).\n    A label hidden by the trace is taken from the reads before and after when they are equal and at most `scale_fill_sec` (7 s) apart.\n    Otherwise the breath has no waveform (`ScaleUnknown` in Alert). A label that has no template is never guessed\n  - Parts above the vertical-axis upper limit are not drawn, so they are clipped at the upper-limit value (`Clipped_Points` = number of such points, `Clipped` in Alert).\n    For such breaths, the on-screen Edipeak value is the correct one\n\n## Expected Layout\nSee `layout.jpg` (red boxes: OCR, white box: Edi waveform, gray box: ECG used to detect the sweep position, yellow box: Edi bar (excluded), blue boxes: text for the screen check and the vertical-axis scale label).\n\n## Limitations\n- Edi axis labels without a template (e.g. above 80 µV) are not read: those breaths have no waveform (`ScaleUnknown`). Add templates with `tools/build_axis_labels.py`.\n  `edi_scale_max` (default 20 µV) is used only when `axis_labels.npz` is missing\n- Parts above the vertical-axis upper limit are clipped (see above)\n- Accuracy: the Servo-U does not log while in standby, so no ventilator export covers this screen. The engine is checked with on-screen values\n  (Edipeak vs the waveform maximum) and by eye (see CHANGELOG)\n- Breath boundaries follow the Servo-U's breath detection (display updates). Small Edi fluctuations may also be counted as one breath\n- Fast breathing with many small breaths (validation hour 16-58-39): a breath of a few µV on a 25-35 µV axis is only a few pixels high, so its waveform and boundaries are coarse (see CHANGELOG 0.3.2)\n- The first and last breaths of a recording are cut off partway (`Fragment` in Alert)\n- Columns overlapping the Edi bar at the right edge (x=1000-1048) and the white dashed line (x=1003-1007, 1041-1045) are not read; they are interpolated from both neighbors\n\n## Author\n- VentOCR Developer Team\n- Contact: naito623@naramed-u.ac.jp\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Edi"
+          ],
+          "validation": {
+            "reported": true,
+            "engine_version": "0.3.2",
+            "date": "2026-10-31",
+            "reporter": "VentOCR Developer Team",
+            "videos": 8,
+            "breaths": 7262,
+            "modes": [
+              "Standby (Edi monitor)"
+            ],
+            "comment": "No ventilator export exists for this screen: the Servo-U Edi monitor is used in standby, and Servo Tracker does not log in standby. Edi values and breath segmentation are therefore validated by visual inspection of the video; everything else is not evaluated. Material: 8 consecutive 1-hour recordings (2026-10-24, Servo-U Edi monitor in standby, 1920x1080 30 fps, analysed at 10 fps), 7262 breaths, 7252 waveforms. Hours 16-58-39 and 18-58-39 were run with 0.3.2, the others with 0.3.1, which differs only in the Edipeak check of 0.3.2 (breaths, boundaries, Edimin and waveforms identical on the re-run hours). Known limitation: hour 16-58-39 has fast breathing with many small breaths (median Edipeak 11.6 µV on 25-35 µV axes, a few pixels high); its waveforms and boundaries are coarser (see CHANGELOG 0.3.2).",
+            "values": {
+              "EdiPeak": {
+                "unit": "µV",
+                "metric": "Visual check against the screen digits (100 breaths)",
+                "result": "100 correct / 100",
+                "n": 100,
+                "comment": "Reference: the digits on the screen. 100 random breaths of hour 14-58-39 (video 600-1200 s). Also checked: 48 random breaths of hour 16-58-39 (47 correct with 0.3.1; the one misread, 4.8 read as 43.8, is corrected by 0.3.2) and all 17 breaths of the 8 hours whose Edipeak was 10 or more and above twice the waveform maximum (14 misreads with the decimal point read as \"3\", corrected by 0.3.2; 3 real values kept)."
+              },
+              "Edimin": {
+                "unit": "µV",
+                "metric": "Visual check against the screen digits (100 breaths)",
+                "result": "100 correct / 100",
+                "n": 100,
+                "comment": "Reference: the digits on the screen. The same 100 random breaths of hour 14-58-39 (the value shown during the next breath)."
+              },
+              "Edimin_displayed": {
+                "unit": "µV",
+                "metric": "Visual check against the screen digits (100 breaths)",
+                "result": "100 correct / 100",
+                "n": 100,
+                "comment": "Reference: the digits on the screen. The same 100 random breaths of hour 14-58-39 (the value shown during the breath)."
+              },
+              "Wave_Max": {
+                "unit": "µV",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": "Not evaluated (no reference). Its agreement with the screen Edipeak is given under waveforms.Edi."
+              },
+              "Wave_Min": {
+                "unit": "µV",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": "Not evaluated (no reference)."
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": "Visual check of breath boundaries on the screen (96 breaths)",
+                "result": "91 correct / 96",
+                "n": 96,
+                "comment": "48 random breaths each of hours 14-58-39 and 16-58-39 (end image with the cut range). 14-58-39: 45/48 (3 start or end slightly late, partway up a rise); 16-58-39: 46/48 (2 end late, running into the next rise). Automatic check on all 8 hours (breaths without excluded alerts; first / last waveform point above 20% of the rise): late starts 5.3-9.8% and late ends 7.9-12.1% per hour, except 16-58-39 (18.7% / 21.2%, mostly tiny breaths that look right by eye). Breaths are the ones the Servo-U detects (Edipeak updates)."
+              }
+            },
+            "waveforms": {
+              "Edi": {
+                "metric": "Visual check: scale label and trace height agree with the screen (48 breaths)",
+                "result": "48 correct / 48",
+                "n": 48,
+                "comment": "48 random breaths of hour 14-58-39 (end image with the cut range; scale read from the axis label of each image). Screen Edipeak vs waveform maximum, all 8 hours, breaths without excluded alerts: within 10% on 88.2-96.9% per hour (median residual +0.07 to +0.18 µV); lowest in 16-58-39 (small breaths a few pixels high). 10 breaths have no waveform (axis label not readable, ScaleUnknown)."
+              }
+            },
+            "excluded_alerts": [
+              "Fragment",
+              "ScaleUnknown",
+              "Abnormal",
+              "NoBreathDetected",
+              "Clipped",
+              "EdiPeakUnreadable"
+            ]
+          }
         }
       ]
     },
