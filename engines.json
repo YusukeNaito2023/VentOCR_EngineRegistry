@@ -4551,6 +4551,557 @@
               "Partial"
             ]
           }
+        },
+        {
+          "version": "0.2.6",
+          "tag": "v0.2.6",
+          "commit": "eca034c29c94b6d907c6ce16466464c63c6709f5",
+          "core_version": "0.2.6",
+          "manifest": {
+            "engine_key": "hamilton_ventocr",
+            "display_name": "Hamilton",
+            "developer": "VentOCR Developer Team",
+            "version": "0.2.6",
+            "engine_api": 3,
+            "ventocr_min": "0.6.2",
+            "description": "Hamilton ventilator OCR engine. Breath = display update of Compliance / VTE. OCR (selectable): VTE, Compliance, Ppeak, MinVol, P0.1, mode, set rate / ΔPinsp / PEEP / oxygen. Waveforms: Paw (Pressure), Flow, Volume, and the 4th panel as Pes or Ptranspulm (option post_ocr.ptranspulm) with wrap-around sweep (50 px/s, 22 s per sweep on 1920x1080). Trigger: A (patient-triggered, pink triangle under the Paw time axis) / C (machine-triggered) / blank (unknown: the Paw panel was hidden or covered by a settings dialog, or the screen was cleared during the breath); a new triangle without a display update also starts a breath.",
+            "base_resolution": "1920x1080",
+            "supported_resolutions": [
+              "1920x1080"
+            ],
+            "has_extract_waves": true,
+            "output_columns": {
+              "frames": [
+                "Frame",
+                "VTE",
+                "Compliance",
+                "Ppeak",
+                "MinVol",
+                "P01",
+                "Mode",
+                "Set_Rate",
+                "Set_Pinsp",
+                "Set_PEEP",
+                "Set_Oxygen",
+                "Sweep_X",
+                "BreathMark",
+                "Trigger_New"
+              ],
+              "breaths": [
+                "BreathNumber",
+                "VTE",
+                "Compliance",
+                "Ppeak",
+                "MinVol",
+                "P01",
+                "Mode",
+                "Set_Rate",
+                "Set_Pinsp",
+                "Set_PEEP",
+                "Set_Oxygen",
+                "Trigger",
+                "Duration"
+              ]
+            },
+            "breath_summary": [
+              "Trigger",
+              "VTE",
+              "Compliance",
+              "Ppeak",
+              "MinVol",
+              "P01",
+              "Mode",
+              "Set_Rate",
+              "Set_Pinsp",
+              "Set_PEEP",
+              "Set_Oxygen",
+              "VTE_displayed",
+              "Compliance_displayed",
+              "Ppeak_displayed",
+              "MinVol_displayed",
+              "P01_displayed"
+            ],
+            "labels": {
+              "Trigger": "Trigger (A: patient / C: machine / blank: unknown)",
+              "Ppeak": "Ppeak (peak pressure)",
+              "MinVol": "MinVol (minute volume)",
+              "P01": "P0.1",
+              "Mode": "Ventilation mode",
+              "Set_Rate": "Rate (setting)",
+              "Set_Pinsp": "ΔPinsp (setting)",
+              "Set_PEEP": "PEEP (setting)",
+              "Set_Oxygen": "Oxygen (setting)",
+              "VTE_displayed": "VTE (displayed)",
+              "Compliance_displayed": "Compliance (displayed)",
+              "Ppeak_displayed": "Ppeak (displayed)",
+              "MinVol_displayed": "MinVol (displayed)",
+              "P01_displayed": "P0.1 (displayed)"
+            },
+            "accuracy": {
+              "VTE": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "Compliance": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL/cmH2O"
+              },
+              "Ppeak": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "MinVol": {
+                "method": null,
+                "threshold": null,
+                "unit": "L/min"
+              },
+              "P01": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Mode": {
+                "method": null,
+                "threshold": null
+              },
+              "Set_Rate": {
+                "method": null,
+                "threshold": null,
+                "unit": "b/min"
+              },
+              "Set_Pinsp": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Set_PEEP": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "Set_Oxygen": {
+                "method": null,
+                "threshold": null,
+                "unit": "%"
+              },
+              "VTE_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL"
+              },
+              "Compliance_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "mL/cmH2O"
+              },
+              "Ppeak_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "MinVol_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "L/min"
+              },
+              "P01_displayed": {
+                "method": null,
+                "threshold": null,
+                "unit": "cmH2O"
+              },
+              "BreathMark": {
+                "method": null,
+                "threshold": null
+              },
+              "Trigger": {
+                "method": null,
+                "threshold": null
+              }
+            },
+            "outputs": {
+              "waves": [
+                {
+                  "name": "Pressure",
+                  "label": "Paw",
+                  "unit": "cmH2O",
+                  "color": "#d62728",
+                  "scale": {
+                    "min": "P_min",
+                    "max": "P_max"
+                  }
+                },
+                {
+                  "name": "Flow",
+                  "unit": "L/min",
+                  "color": "#1f77b4",
+                  "scale": {
+                    "min": "F_min",
+                    "max": "F_max"
+                  }
+                },
+                {
+                  "name": "Volume",
+                  "unit": "mL",
+                  "color": "#2ca02c",
+                  "scale": {
+                    "min": "V_min",
+                    "max": "V_max"
+                  }
+                },
+                {
+                  "name": "Pes",
+                  "label": "Pes",
+                  "unit": "cmH2O",
+                  "color": "#8c564b",
+                  "scale": {
+                    "min": "Pes_min",
+                    "max": "Pes_max"
+                  }
+                },
+                {
+                  "name": "Ptranspulm",
+                  "label": "Ptranspulm",
+                  "unit": "cmH2O",
+                  "color": "#8c564b",
+                  "scale": {
+                    "min": "Ptranspulm_min",
+                    "max": "Ptranspulm_max"
+                  }
+                }
+              ],
+              "breath_values": [
+                {
+                  "name": "Trigger",
+                  "label": "Trigger (A: patient / C: machine / blank: unknown)"
+                },
+                {
+                  "name": "VTE",
+                  "unit": "mL",
+                  "format": "{:g}"
+                },
+                {
+                  "name": "Compliance",
+                  "unit": "mL/cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Ppeak",
+                  "label": "Ppeak (peak pressure)",
+                  "unit": "cmH2O",
+                  "format": "{:g}"
+                },
+                {
+                  "name": "MinVol",
+                  "label": "MinVol (minute volume)",
+                  "unit": "L/min",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "P01",
+                  "label": "P0.1",
+                  "unit": "cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Mode",
+                  "label": "Ventilation mode"
+                },
+                {
+                  "name": "Set_Rate",
+                  "label": "Rate (setting)",
+                  "unit": "b/min",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_Pinsp",
+                  "label": "ΔPinsp (setting)",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_PEEP",
+                  "label": "PEEP (setting)",
+                  "unit": "cmH2O",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "Set_Oxygen",
+                  "label": "Oxygen (setting)",
+                  "unit": "%",
+                  "format": "{:.0f}"
+                },
+                {
+                  "name": "VTE_displayed",
+                  "label": "VTE (displayed)",
+                  "unit": "mL",
+                  "format": "{:g}"
+                },
+                {
+                  "name": "Compliance_displayed",
+                  "label": "Compliance (displayed)",
+                  "unit": "mL/cmH2O",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "Ppeak_displayed",
+                  "label": "Ppeak (displayed)",
+                  "unit": "cmH2O",
+                  "format": "{:g}"
+                },
+                {
+                  "name": "MinVol_displayed",
+                  "label": "MinVol (displayed)",
+                  "unit": "L/min",
+                  "format": "{:.1f}"
+                },
+                {
+                  "name": "P01_displayed",
+                  "label": "P0.1 (displayed)",
+                  "unit": "cmH2O",
+                  "format": "{:.1f}"
+                }
+              ],
+              "alerts": [
+                {
+                  "name": "Fragment",
+                  "label": "Cut at the start or end of the recording",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Hidden",
+                  "label": "Waveforms hidden by a popup, a settings dialog or another screen",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Clipped",
+                  "label": "Waveform clipped at the axis range and not re-read",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Partial",
+                  "label": "More than 30% of the waveform missing",
+                  "exclude_from_accuracy": true
+                },
+                {
+                  "name": "Cleared",
+                  "label": "The ventilator cleared the waveform screen during the breath",
+                  "exclude_from_accuracy": false
+                },
+                {
+                  "name": "Axis",
+                  "label": "Axis labels not read; previous scale used",
+                  "exclude_from_accuracy": false
+                },
+                {
+                  "name": "Long",
+                  "label": "Longer than one sweep (22 s); only the last sweep",
+                  "exclude_from_accuracy": false
+                }
+              ]
+            }
+          },
+          "default_options": {
+            "initial_ocr": {
+              "ocr_keys": [
+                "VTE",
+                "Compliance",
+                "Ppeak"
+              ],
+              "use_gpu": true,
+              "diff_thresh": 3.0
+            },
+            "post_ocr": {
+              "breath_trigger": [
+                "Compliance",
+                "VTE"
+              ],
+              "boundary_shift_sec": -0.5,
+              "stable_frames": 2,
+              "trim_to_breath": true,
+              "ptranspulm": false
+            }
+          },
+          "readme": "# Hamilton VentOCR Engine\n\n## Supported Devices\n- Hamilton ventilators (screen with numeric values on the left and four waveforms in the center: airway pressure / flow / volume / Pes or Ptranspulm)\n- Videos recorded at 1920x1080 (other resolutions are scaled to 1920x1080 before reading)\n\n## Description\n- **One breath** = from one update of the numeric values on the left (compliance, expiratory VT) to the next update.\n  - The display update lags the start of inspiration by about 0.16 s, so the boundary is shifted from the update by `boundary_shift_sec` (default -0.5 s, i.e. 0.5 s earlier), so that each breath ends at the end of expiration\n  - Waveform boundaries are aligned to the start of inspiration (`trim_to_breath`): for spontaneous breaths, 0.08 s before the patient-trigger triangle (0.8.1);\n    for mandatory breaths, 0.04 s before the foot of the flow upstroke. The triangle marks exactly where Hamilton started the breath and coincides with the point where Volume returns to 0\n  - So that a boundary is detected even when compliance has the same value as in the previous breath, VTE updates are also used as boundaries by default (`breath_trigger`)\n  - Update = a new value of VTE or compliance persists for at least `stable_frames` (default 2) frames (0.7.0). The boundary is the first frame showing that value.\n    A blank (\"---\" or unreadable) also counts as a value. A value lasting only one frame is ignored. If the two values change one frame apart, this counts as a single update.\n    There is no minimum breath duration (the min_breath_sec = 1 s used up to 0.6 has been removed; short breaths under 1 s are kept as one breath each)\n  - If VTE and compliance happen to be identical in consecutive breaths, the display does not change. Therefore, if there is no display update from 0.5 s before to 1 s after\n    a patient-trigger triangle (see below), a boundary is placed as if an update had occurred 0.3 s after the triangle (0.8.0; marked in `Trigger_Split` of Frames.csv; no alert since 0.2.5).\n    This is not applied near Abnormal frames (3 s before to 1 s after) or at the end of the recording. Consecutive mandatory breaths (no triangle) with identical values cannot be separated\n- **OCR** (selected under \"Values to OCR\" in the analysis dialog; default: VTE, Compliance, Ppeak):\n  - Measured values: expiratory VT (`VTE`), compliance (`Compliance`), peak pressure (`Ppeak`), minute volume (`MinVol`), P0.1 (`P01`).\n    The numbers on screen are the measurements of the \"previous breath\", so the value in Breaths.csv is the value displayed during the next breath, and `*_displayed` is the value displayed during that breath itself\n  - Settings: ventilation mode (`Mode`, text), respiratory rate (`Set_Rate`), Δ inspiratory pressure (`Set_Pinsp`), PEEP/CPAP (`Set_PEEP`), oxygen concentration (`Set_Oxygen`).\n    These are the values displayed during that breath\n  - Columns for values that are not selected are not output\n- **Waveforms**: Pressure (airway pressure, Paw), Flow, Volume, and the pressure in the 4th panel. The columns of BreathCSVs/<n>.csv are X, Pressure, Flow, Volume, Pes (or Ptranspulm)\n  - The 4th panel can show either Pes (esophageal pressure) or Ptranspulm (transpulmonary pressure = Paw − Pes), depending on the Hamilton settings. Which one is chosen with the analysis setting\n    `post_ocr.ptranspulm` (default off = Pes) (0.2.0). When on, the column is named Ptranspulm, and the names in Breaths.csv and Frames.csv\n    (Axis_Ptranspulm, Ptranspulm_min / Ptranspulm_max), fields.txt and scale_meta.json change accordingly (the values are the same).\n    The panel name is not read, so choose the correct setting for each video. Videos in which the display was switched during the recording are not supported\n  - The sweep draws from left to right at 50 px/s; on reaching x=1567 it returns to x=467 and overwrites (one sweep 22 s, wrap around)\n  - In each frame, the right edge of the columns that changed since the previous frame (= pen (sweep head) + 3 px erase band) is recorded, and the pen is tracked in every frame (0.6.0; core.track_sweep)\n  - Each column is read from the breath's last frame (or the last frame of its pass). Columns within 0.3 s behind the pen tip of that frame are read\n    from the next breath's last frame instead, where they are well behind the pen (0.2.6: a pen tip estimated a few px too far showed the previous pass's waveform there).\n    If that frame can't be used (popup, clear, mid-redraw after an axis change, overwritten by the next pass), the columns within 0.1 s of the pen tip are left blank\n  - Drawing can stop (e.g. due to screen operations), after which the whole screen is cleared and drawing restarts from the left edge mid-breath. The part before that is read from the last frame\n    in which the pen was found before the clearing (0.2.3; the return to the left edge is only recognized a few frames later, and up to 0.2.2 the cleared screen was read).\n    The period during which drawing was stopped is blank (breaths with 30% or more blank get Partial in Alert). Breaths during which the screen was cleared get Cleared in Alert (0.2.3).\n    While Hamilton is not outputting measurements (about 1.5 s in B541 of Ptranspulm 2026-10-09; the Study Recorder also shows Paw 0 and no Flow),\n    no waveform is drawn on screen either, so that part cannot be recovered\n  - Waveforms exceeding the vertical axis range are cut off at the edge of the plot area. If Hamilton then widens the axis, the columns are re-read while they are still on screen\n    (the re-read waveform is indicated in Wave_Reread of Breaths.csv; if it cannot be re-read, Alert gets Clipped. The lower edge of Volume (the part below 0) is not checked)\n  - A breath's waveform is cut out of the last frame of that breath, from \"the column after the pen position at the start\" to \"the pen column at the end\" (breaths spanning a wrap-around are joined)\n  - Time of each point = `Wave_T0` + row number / `Wave_Rate` (Breaths.csv)\n- **Trigger** (0.8.0): `Trigger` in Breaths.csv = `A` (patient-triggered, spontaneous) / `C` (mandatory, machine-triggered). It is also shown in the breath property summary\n  - At the start of a breath that Hamilton classifies as patient-triggered, a pink triangle (▲) is drawn just below the time axis of the airway pressure panel.\n    If a new triangle is drawn during the breath, it is A; otherwise C. During a popup, the triangle is still used as long as the airway pressure panel is visible (its axis labels can be read).\n    A breath that contains frames in which the airway pressure panel is not visible and has no triangle is blank (the triangle may have been hidden).\n    A breath during which the screen was cleared (Cleared in Alert), with an undrawn interval of 0.3 s or more and no triangle, is also blank\n    (inspiration may have started during that interval without a triangle being drawn; 0.2.3; Settings.CLEARED_GAP_SEC).\n    A breath containing frames in which a settings dialog covered the waveform panels (Hidden in Alert) and having no triangle is also blank (the triangle may have been hidden; 0.2.4)\n  - initial_ocr records the triangle apexes in each frame (`Trigger_Apexes` in Frames.csv), and post_ocr selects those that newly appear just behind the pen (0 to 40 px)\n    (`Trigger_New`). Triangles from the previous sweep also remain on screen to the right of the pen, so they are distinguished by position.\n    A triangle redrawn at almost the same position as one from the previous sweep is distinguished by the fact that it remains after the pen has passed\n  - The time axis is at the 0 position of airway pressure and moves up and down with the axis scale, so triangles are searched for by color and size within the airway pressure panel (y=100 to 315).\n    A triangle overlapping the time-axis tick numbers (5, 10, 15, 20) bleeds in color and breaks into small fragments, so the fragments are joined before classification\n\n## Vertical Axis Scale (0.5.0)\n- Hamilton frequently and automatically changes the vertical axis scale of each waveform (15 different scales in one hour of Ptranspulm 2026-10-09:\n  Paw 0 to 20 / 0 to 40, Flow ±45 / ±75 / ±150, Volume 400 / 800 / 1600, Pes 0 to 20 / -10 to 20 / -20 to 20 / -20 to 40 / -40 to 40, etc. The 0 position also moves)\n- In each frame, the axis labels (x=414 to 462) are read, and for each waveform a straight line \"label y → value\" is fitted (axis_scale.py).\n  The labels consist only of 0 to 9 and \"-\" and always have the same shapes, so each character is matched against templates instead of using general-purpose OCR\n- A breath's waveform is converted to physical units with the conversion of the last frame it was cut from. In Breaths.csv, Axis_<waveform> = \"a;b;lowest axis label;highest axis label\" (value = a*y + b);\n  P_min / P_max etc. are the values at the bottom and top edges of the plot area (the vertical axis line on screen) (0.8.1; up to 0.8.0 these were the smallest and largest label numbers,\n  and waveforms below the lowest label went outside the chart)\n\n## Expected Layout\nSee `layout.jpg` (red boxes: OCR (Settings.OCR_FIELDS); white boxes: waveforms; blue boxes: axis labels used to check the screen).\n\n## Frame Rate and Frame Images\n- The analysis frame rate need not be 10 fps (engine_api 2; verified at 5, 10 and 30 fps). Conversion between seconds and frame counts uses `post_ocr.fps`.\n  The `stable_frames` setting is a frame count at 10 fps; at other frame rates it is converted to the same duration\n- Only the frame images needed for waveform extraction are read, with `cv2.imread` (engine_api 3; about 40 images for a 2-minute video)\n\n## Alerts (the `Alert` column of Breaths.csv) and blank Trigger (0.2.5)\nA breath can have several alerts (comma-separated). \"Accuracy evaluation\" tells whether the breath is excluded when evaluating reading accuracy\n(`exclude_from_accuracy` in `outputs.alerts` of manifest.json; ENGINE_API.md §8.1).\n\n| Alert | Added when (thresholds) | Accuracy evaluation |\n|---|---|---|\n| Fragment | The first breath of the recording (the recording starts mid-breath) and the last breath (cut at the end of the recording) | Excluded |\n| Hidden | The waveforms were hidden during the breath, by either check: (a) a frame where fewer than 3 waveforms (`AXIS_MIN_PANELS`) have readable axis labels (popup or another screen; `Abnormal` column), or (b) a frame where 10% (`POPUP_COVER_MIN`) or more of the pixels sampled every 8 px in the waveform area (x 467-1567, y 95-1000) are bright (gray above 180), such as a settings dialog (`Wave_Covered` in Frames.csv) | Excluded |\n| Clipped | The waveform sticks to the top or bottom of the plot area (3 or more points in a row, or next to a blank) and could not be re-read from a frame with a wider axis within 22 s (`SWEEP_REREAD_SEC`); the bottom of Volume is not checked | Excluded |\n| Partial | More than 30% of the waveform (Paw) is blank (drawing stopped, screen cleared or hidden, unreadable) | Excluded |\n| Cleared | The ventilator cleared the waveform screen during the breath and restarted from the left edge (the pen moved back left by 100 px (`SWEEP_WRAP_JUMP`) or more before reaching the right edge, or by 15 px (`SWEEP_RESTART_MARGIN`) or more to near the left edge) | Not excluded |\n| Axis | An axis could not be read in the breath's last frame and the previous labels (or the defaults) were used (not added when the frame is hidden) | Not excluded |\n| Long | The waveform is longer than one sweep (1100 px − 15 px margin = 1085 points, about 21.7 s); only the last sweep is kept | Not excluded |\n\n**Blank Trigger (unknown)**: a breath with no new triangle is blank instead of C when any of these holds:\n- it contains frames where the airway pressure panel is not visible (axis labels unreadable, e.g. a popup)\n- the waveform area was covered by a settings dialog (Hidden, check b)\n- the screen was cleared (Cleared) and the waveform has an undrawn stretch of 0.3 s (`CLEARED_GAP_SEC`) or more\n\n## Limitations\n- P0.1 was \"---\" (not measured) in the sample videos, so reading its numeric value has not been verified (negative values are also allowed)\n- Waveform axis labels are read by matching against character templates (axis_glyphs.npz). The templates contain no \"9\" (it did not appear in the videos used to build them), so\n  labels containing \"9\" (such as 90) cannot be read, and that waveform is converted with the last labels that could be read (Axis in Alert)\n- Breaths containing frames in which a settings dialog (e.g. ventilation mode settings) covered the waveform panels get Hidden in Alert (0.2.4; Popup up to 0.2.4).\n  Within the waveform panels (x 467 to 1567, y 95 to 1000), the fraction of bright pixels (gray above 180), sampled every 8 px, is recorded in `Wave_Covered` of Frames.csv,\n  and frames with 0.1 (`POPUP_COVER_MIN`) or more are considered covered (normally 0.02 or less; dialogs 0.3 to 0.8).\n  Dialogs that do not hide the axis labels do not cause Abnormal, so they are detected this way. Hidden breaths are excluded when evaluating reading accuracy\n- Frames in which fewer than three waveforms have readable axis labels (popups, other screens) are Abnormal (`Abnormal` column of Breaths.csv; Hidden in Alert since 0.2.5).\n  Hamilton keeps drawing the waveforms in the background during a popup, so waveforms are also read for breaths containing Abnormal frames (0.8.0).\n  If the image from which the columns would be read is in the middle of a popup, the four waveforms are read from the frame just after the popup disappears (Reread in Wave_Popup of Breaths.csv).\n  If the popup lasts long (one sweep, 22 s or more) and those columns have been overwritten, only Paw is read from the airway pressure panel, which remains visible during the popup (PawOnly).\n  If the screen is cleared in the meantime, or the airway pressure panel is not visible either, the waveform is blank\n- Screens with a changed horizontal axis (sweep width 22 s) are not supported\n- For breaths longer than one sweep (22 s), only the last sweep is kept (Long in Alert)\n- The first and last breaths of a recording are truncated (Fragment in Alert)\n- When the triangle cannot be seen (screen cleared, dialog, popup), Trigger is blank rather than C. In Ptranspulm 2026-10-09 (0.2.5), Trigger matched the Study Recorder\n  for all 1103 A and 151 C breaths; 5 breaths were blank (B541, B854, B990, B991, B988)\n\n## Author\n- VentOCR Developer Team\n",
+          "layout": "layout.jpg",
+          "waveforms": [
+            "Pressure",
+            "Flow",
+            "Volume",
+            "Pes",
+            "Ptranspulm"
+          ],
+          "validation": {
+            "reported": false,
+            "engine_version": null,
+            "date": null,
+            "reporter": null,
+            "videos": null,
+            "breaths": null,
+            "modes": [],
+            "comment": "",
+            "values": {
+              "VTE": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Compliance": {
+                "unit": "mL/cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ppeak": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "MinVol": {
+                "unit": "L/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "P01": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Mode": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Rate": {
+                "unit": "b/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Pinsp": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_PEEP": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Set_Oxygen": {
+                "unit": "%",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "VTE_displayed": {
+                "unit": "mL",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Compliance_displayed": {
+                "unit": "mL/cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ppeak_displayed": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "MinVol_displayed": {
+                "unit": "L/min",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "P01_displayed": {
+                "unit": "cmH2O",
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "BreathMark": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Trigger": {
+                "unit": null,
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "waveforms": {
+              "Pressure": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Flow": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Volume": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Pes": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              },
+              "Ptranspulm": {
+                "metric": null,
+                "result": null,
+                "n": null,
+                "comment": ""
+              }
+            },
+            "excluded_alerts": [
+              "Fragment",
+              "Hidden",
+              "Clipped",
+              "Partial"
+            ]
+          }
         }
       ]
     },
@@ -7897,5 +8448,5 @@
       ]
     }
   ],
-  "updated": "2026-10-30"
+  "updated": "2026-10-31"
 }
